@@ -17,7 +17,6 @@ import { CharacterConfigProvider } from "./context/character-config-context";
 import { Toaster } from "./components/ui/toaster";
 import { VADProvider } from "./context/vad-context";
 import { Live2D } from "./components/canvas/live2d";
-import { VRMRenderer } from "./components/canvas/vrm-renderer";
 import TitleBar from "./components/electron/title-bar";
 import { InputSubtitle } from "./components/electron/input-subtitle";
 import { ProactiveSpeakProvider } from "./context/proactive-speak-context";
@@ -102,10 +101,7 @@ function AppContent(): JSX.Element {
           ? getResponsiveLive2DWindowStyle(showSidebar)
           : live2dPetStyle)}
       >
-        {/* VRM Renderer - 3D Model */}
-        <VRMRenderer modelPath="/models/f2.vrm" isPetMode={mode === "pet"} />
-        {/* Live2D - 2D Sprite (Disabled) */}
-        {/* <Live2D /> */}
+        <Live2D />
       </Box>
 
       {/* Conditional Rendering of Window UI */}

@@ -1,0 +1,6 @@
+
+
+
+
+cd serverHere
+uv run run_server.py

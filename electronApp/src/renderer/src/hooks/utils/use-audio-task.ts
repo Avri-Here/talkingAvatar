@@ -12,7 +12,6 @@ import { toaster } from '@/components/ui/toaster';
 import { useWebSocket } from '@/context/websocket-context';
 import { DisplayText } from '@/services/websocket-service';
 import { useLive2DExpression } from '@/hooks/canvas/use-live2d-expression';
-import { useVRMExpression } from '@/hooks/canvas/use-vrm-expression';
 import * as LAppDefine from '../../../WebSDK/src/lappdefine';
 
 // Simple type alias for Live2D model
@@ -38,7 +37,6 @@ export const useAudioTask = () => {
   const { appendResponse, appendAIMessage } = useChatHistory();
   const { sendMessage } = useWebSocket();
   const { setExpression } = useLive2DExpression();
-  const { setExpression: setVRMExpression } = useVRMExpression();
 
   // State refs to avoid stale closures
   const stateRef = useRef({
@@ -137,15 +135,6 @@ export const useAudioTask = () => {
           );
         }
 
-        // Set VRM expression if available
-        if (expressions?.[0] !== undefined) {
-          setVRMExpression(
-            expressions[0],
-            1.0,
-            `[VRM] Set expression to: ${expressions[0]}`,
-          );
-        }
-
         // Start talk motion
         if (LAppDefine && LAppDefine.PriorityNormal) {
           console.log("Starting random 'Talk' motion");
@@ -164,27 +153,8 @@ export const useAudioTask = () => {
         audioManager.setCurrentAudio(audio, model);
         let isFinished = false;
 
-        // VRM lip sync variables
-        let vrmAudioContext: AudioContext | null = null;
-        let vrmAnalyser: AnalyserNode | null = null;
-        let vrmLipSyncInterval: number | null = null;
-
         const cleanup = () => {
           audioManager.clearCurrentAudio(audio);
-          
-          // Clean up VRM lip sync
-          if (vrmLipSyncInterval) {
-            clearInterval(vrmLipSyncInterval);
-            vrmLipSyncInterval = null;
-          }
-          if (typeof (window as any).stopVRMLipSync === 'function') {
-            (window as any).stopVRMLipSync();
-          }
-          if (vrmAudioContext) {
-            vrmAudioContext.close().catch(e => console.error('Error closing audio context:', e));
-            vrmAudioContext = null;
-          }
-          
           if (!isFinished) {
             isFinished = true;
             resolve();
@@ -208,38 +178,7 @@ export const useAudioTask = () => {
             cleanup();
           });
 
-          // Setup VRM lip sync with audio context
-          if (typeof (window as any).setVRMLipSync === 'function') {
-            try {
-              vrmAudioContext = new AudioContext();
-              const audioSource = vrmAudioContext.createMediaElementSource(audio);
-              vrmAnalyser = vrmAudioContext.createAnalyser();
-              vrmAnalyser.fftSize = 256;
-              
-              audioSource.connect(vrmAnalyser);
-              vrmAnalyser.connect(vrmAudioContext.destination);
-
-              const dataArray = new Uint8Array(vrmAnalyser.frequencyBinCount);
-              
-              vrmLipSyncInterval = window.setInterval(() => {
-                if (vrmAnalyser) {
-                  vrmAnalyser.getByteFrequencyData(dataArray);
-                  const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-                  const normalizedVolume = average / 255.0;
-                  
-                  if (typeof (window as any).setVRMLipSync === 'function') {
-                    (window as any).setVRMLipSync(normalizedVolume);
-                  }
-                }
-              }, 50); // Update 20 times per second
-
-              console.log('[VRM] Lip sync initialized');
-            } catch (error) {
-              console.error('[VRM] Failed to initialize lip sync:', error);
-            }
-          }
-
-          // Setup Live2D lip sync
+          // Setup lip sync
           if (model._wavFileHandler) {
             if (!model._wavFileHandler._initialized) {
               console.log('Applying enhanced lip sync');
