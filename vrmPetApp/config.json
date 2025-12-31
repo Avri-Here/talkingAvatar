@@ -1,0 +1,14 @@
+{
+  "vrm_model": "./models/character.vrm",
+  "server": {
+    "host": "localhost",
+    "port": 12393
+  },
+  "window": {
+    "width": 400,
+    "height": 600,
+    "transparent": true,
+    "alwaysOnTop": true
+  }
+}
+

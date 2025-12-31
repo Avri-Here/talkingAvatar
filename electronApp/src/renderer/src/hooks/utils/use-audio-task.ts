@@ -164,8 +164,27 @@ export const useAudioTask = () => {
         audioManager.setCurrentAudio(audio, model);
         let isFinished = false;
 
+        // VRM lip sync variables
+        let vrmAudioContext: AudioContext | null = null;
+        let vrmAnalyser: AnalyserNode | null = null;
+        let vrmLipSyncInterval: number | null = null;
+
         const cleanup = () => {
           audioManager.clearCurrentAudio(audio);
+          
+          // Clean up VRM lip sync
+          if (vrmLipSyncInterval) {
+            clearInterval(vrmLipSyncInterval);
+            vrmLipSyncInterval = null;
+          }
+          if (typeof (window as any).stopVRMLipSync === 'function') {
+            (window as any).stopVRMLipSync();
+          }
+          if (vrmAudioContext) {
+            vrmAudioContext.close().catch(e => console.error('Error closing audio context:', e));
+            vrmAudioContext = null;
+          }
+          
           if (!isFinished) {
             isFinished = true;
             resolve();
@@ -189,7 +208,38 @@ export const useAudioTask = () => {
             cleanup();
           });
 
-          // Setup lip sync
+          // Setup VRM lip sync with audio context
+          if (typeof (window as any).setVRMLipSync === 'function') {
+            try {
+              vrmAudioContext = new AudioContext();
+              const audioSource = vrmAudioContext.createMediaElementSource(audio);
+              vrmAnalyser = vrmAudioContext.createAnalyser();
+              vrmAnalyser.fftSize = 256;
+              
+              audioSource.connect(vrmAnalyser);
+              vrmAnalyser.connect(vrmAudioContext.destination);
+
+              const dataArray = new Uint8Array(vrmAnalyser.frequencyBinCount);
+              
+              vrmLipSyncInterval = window.setInterval(() => {
+                if (vrmAnalyser) {
+                  vrmAnalyser.getByteFrequencyData(dataArray);
+                  const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                  const normalizedVolume = average / 255.0;
+                  
+                  if (typeof (window as any).setVRMLipSync === 'function') {
+                    (window as any).setVRMLipSync(normalizedVolume);
+                  }
+                }
+              }, 50); // Update 20 times per second
+
+              console.log('[VRM] Lip sync initialized');
+            } catch (error) {
+              console.error('[VRM] Failed to initialize lip sync:', error);
+            }
+          }
+
+          // Setup Live2D lip sync
           if (model._wavFileHandler) {
             if (!model._wavFileHandler._initialized) {
               console.log('Applying enhanced lip sync');

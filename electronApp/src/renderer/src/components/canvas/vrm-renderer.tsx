@@ -9,12 +9,14 @@ interface VRMRendererProps {
   modelPath?: string;
   onModelLoaded?: (vrm: VRM) => void;
   backgroundColor?: string;
+  isPetMode?: boolean;
 }
 
 export const VRMRenderer = ({
-  modelPath = '/models/character.vrm',
+  modelPath = '/models/f2.vrm',
   onModelLoaded,
-  backgroundColor = 'transparent'
+  backgroundColor = 'transparent',
+  isPetMode = false
 }: VRMRendererProps): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const vrmRef = useRef<VRM | null>(null);
@@ -24,6 +26,11 @@ export const VRMRenderer = ({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Drag state
+  const isDraggingRef = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  const modelOffset = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -34,12 +41,12 @@ export const VRMRenderer = ({
 
     // Setup Camera
     const camera = new THREE.PerspectiveCamera(
-      30,
+      20, // Narrower FOV to fit full body
       window.innerWidth / window.innerHeight,
       0.1,
       20
     );
-    camera.position.set(0, 1.3, 3);
+    camera.position.set(0, 0.8, 5); // Move camera further back and higher
     cameraRef.current = camera;
 
     // Setup Renderer
@@ -91,8 +98,8 @@ export const VRMRenderer = ({
 
         console.log('[VRM] Model loaded successfully!', vrm);
         
-        // Position model
-        vrm.scene.position.y = -0.5;
+        // Position model - center it vertically
+        vrm.scene.position.set(0, -1.0, 0); // Lower position for full body view
 
         setIsLoaded(true);
         setLoadingProgress(100);
@@ -109,9 +116,10 @@ export const VRMRenderer = ({
         setLoadingProgress(Math.round(percent));
         console.log('[VRM] Loading progress:', Math.round(percent), '%');
       },
-      (error) => {
+      (error: unknown) => {
         console.error('[VRM] Error loading model:', error);
-        setLoadingError(error.message || 'Failed to load VRM model');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load VRM model';
+        setLoadingError(errorMessage);
       }
     );
 
@@ -165,23 +173,92 @@ export const VRMRenderer = ({
 
     window.addEventListener('resize', handleResize);
 
-    // Mouse Movement for Eye Tracking
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!vrmRef.current?.lookAt) return;
+    // Mouse/Touch handlers for dragging
+    const handlePointerDown = (event: PointerEvent) => {
+      isDraggingRef.current = true;
+      lastMousePos.current = { x: event.clientX, y: event.clientY };
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = 'grabbing';
+      }
 
-      const x = (event.clientX / window.innerWidth) * 2 - 1;
-      const y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      // Update look-at target
-      vrmRef.current.lookAt.target.set(x * 0.5, y * 0.5 + 1.3, 0);
+      // In Pet Mode, enable window dragging via Electron
+      if (isPetMode) {
+        console.log('[VRM Pet Mode] Dragging enabled - Electron will handle window movement');
+        // Note: Electron handles window dragging automatically in pet mode
+        // via the -webkit-app-region: drag CSS property
+      }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    const handlePointerUp = () => {
+      isDraggingRef.current = false;
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = 'grab';
+      }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (isDraggingRef.current) {
+        if (isPetMode) {
+          // In Pet Mode, Electron handles the window dragging
+          // Just show visual feedback
+          console.log('[VRM Pet Mode] Dragging window');
+        } else if (vrmRef.current) {
+          // In Window Mode, move the model
+          const deltaX = event.clientX - lastMousePos.current.x;
+          const deltaY = event.clientY - lastMousePos.current.y;
+
+          modelOffset.current.x += deltaX * 0.003;
+          modelOffset.current.y -= deltaY * 0.003;
+
+          vrmRef.current.scene.position.x = modelOffset.current.x;
+          vrmRef.current.scene.position.y = -1.0 + modelOffset.current.y;
+
+          lastMousePos.current = { x: event.clientX, y: event.clientY };
+        }
+      } else if (vrmRef.current?.lookAt && !isPetMode) {
+        // Eye tracking when not dragging (only in Window Mode)
+        const x = (event.clientX / window.innerWidth) * 2 - 1;
+        const y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        // Update look-at target position
+        const target = vrmRef.current.lookAt.target;
+        if (target && 'position' in target) {
+          target.position.set(x * 0.5, y * 0.5 + 1.3, 0);
+        }
+      }
+    };
+
+    // Mouse wheel for zoom
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (cameraRef.current) {
+        const delta = event.deltaY * 0.001;
+        cameraRef.current.position.z += delta;
+        // Clamp zoom
+        cameraRef.current.position.z = Math.max(2, Math.min(10, cameraRef.current.position.z));
+      }
+    };
+
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab';
+      canvasRef.current.addEventListener('pointerdown', handlePointerDown);
+      canvasRef.current.addEventListener('pointerup', handlePointerUp);
+      canvasRef.current.addEventListener('pointermove', handlePointerMove);
+      canvasRef.current.addEventListener('pointerleave', handlePointerUp);
+      canvasRef.current.addEventListener('wheel', handleWheel, { passive: false });
+    }
 
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
+
+      if (canvasRef.current) {
+        canvasRef.current.removeEventListener('pointerdown', handlePointerDown);
+        canvasRef.current.removeEventListener('pointerup', handlePointerUp);
+        canvasRef.current.removeEventListener('pointermove', handlePointerMove);
+        canvasRef.current.removeEventListener('pointerleave', handlePointerUp);
+        canvasRef.current.removeEventListener('wheel', handleWheel);
+      }
 
       if (rendererRef.current) {
         rendererRef.current.dispose();
@@ -196,7 +273,7 @@ export const VRMRenderer = ({
     };
   }, [modelPath, onModelLoaded, backgroundColor]);
 
-  // Expose methods to change expressions
+  // Expose methods to change expressions and lip sync
   useEffect(() => {
     const setExpression = (expressionName: string, value: number) => {
       if (vrmRef.current?.expressionManager) {
@@ -215,13 +292,45 @@ export const VRMRenderer = ({
       }
     };
 
+    // Lip sync support - set mouth open value based on audio volume
+    const setLipSync = (volume: number) => {
+      if (vrmRef.current?.expressionManager) {
+        // VRM standard mouth shapes
+        const mouthOpen = Math.min(1.0, volume * 3.0); // Amplify volume for visibility
+        
+        // Try different VRM mouth blendshapes
+        vrmRef.current.expressionManager.setValue('aa', mouthOpen);
+        vrmRef.current.expressionManager.setValue('a', mouthOpen);
+        vrmRef.current.expressionManager.setValue('mouth', mouthOpen);
+        
+        // Debug first time
+        if (volume > 0.1 && !(window as any)._vrmLipSyncDebug) {
+          console.log(`[VRM Lip Sync] Volume: ${volume}, Mouth Open: ${mouthOpen}`);
+          (window as any)._vrmLipSyncDebug = true;
+        }
+      }
+    };
+
+    const stopLipSync = () => {
+      if (vrmRef.current?.expressionManager) {
+        vrmRef.current.expressionManager.setValue('aa', 0);
+        vrmRef.current.expressionManager.setValue('a', 0);
+        vrmRef.current.expressionManager.setValue('mouth', 0);
+      }
+    };
+
     // Expose to window for WebSocket handler
     (window as any).setVRMExpression = setExpression;
     (window as any).resetVRMExpressions = resetExpressions;
+    (window as any).setVRMLipSync = setLipSync;
+    (window as any).stopVRMLipSync = stopLipSync;
 
     return () => {
       delete (window as any).setVRMExpression;
       delete (window as any).resetVRMExpressions;
+      delete (window as any).setVRMLipSync;
+      delete (window as any).stopVRMLipSync;
+      delete (window as any)._vrmLipSyncDebug;
     };
   }, []);
 

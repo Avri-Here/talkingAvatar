@@ -103,7 +103,7 @@ function AppContent(): JSX.Element {
           : live2dPetStyle)}
       >
         {/* VRM Renderer - 3D Model */}
-        <VRMRenderer modelPath="/models/character.vrm" />
+        <VRMRenderer modelPath="/models/f2.vrm" isPetMode={mode === "pet"} />
         {/* Live2D - 2D Sprite (Disabled) */}
         {/* <Live2D /> */}
       </Box>

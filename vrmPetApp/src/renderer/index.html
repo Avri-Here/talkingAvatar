@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VRM Pet</title>
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+    }
+    body { 
+      overflow: hidden; 
+      background: transparent;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      margin: 0;
+      padding: 0;
+      -webkit-app-region: drag;
+    }
+    canvas { 
+      width: 100vw; 
+      height: 100vh; 
+      display: block;
+      cursor: grab;
+      position: absolute;
+      top: 0;
+      left: 0;
+      -webkit-app-region: drag;
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+    #status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 12px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      pointer-events: none;
+      z-index: 1000;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="vrm-canvas"></canvas>
+  <div id="status" style="display: none;">Loading VRM...</div>
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "../../node_modules/three/build/three.module.js",
+      "three/addons/": "../../node_modules/three/examples/jsm/",
+      "@pixiv/three-vrm": "../../node_modules/@pixiv/three-vrm/lib/three-vrm.module.js"
+    }
+  }
+  </script>
+  
+  <script type="module" src="./vrm-renderer.js"></script>
+  <script type="module" src="./websocket-client.js"></script>
+  <script type="module" src="./audio-handler.js"></script>
+  <script type="module" src="./mic-input.js"></script>
+</body>
+</html>
+
