@@ -6,7 +6,6 @@ import { MicVAD } from '@ricky0123/vad-web';
 import { useInterrupt } from '@/components/canvas/live2d';
 import { audioTaskQueue } from '@/utils/task-queue';
 import { useSendAudio } from '@/hooks/utils/use-send-audio';
-import { SubtitleContext } from './subtitle-context';
 import { AiStateContext, AiState } from './ai-state-context';
 import { loadConfig } from '@/utils/config-loader';
 import { toaster } from '@/components/ui/toaster';
@@ -139,14 +138,12 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   // External hooks and contexts
   const { interrupt } = useInterrupt();
   const { sendAudioPartition } = useSendAudio();
-  const { setSubtitleText } = useContext(SubtitleContext)!;
   const { aiState, setAiState } = useContext(AiStateContext)!;
 
   // Refs for callback stability
   const interruptRef = useRef(interrupt);
   const sendAudioPartitionRef = useRef(sendAudioPartition);
   const aiStateRef = useRef<AiState>(aiState);
-  const setSubtitleTextRef = useRef(setSubtitleText);
   const setAiStateRef = useRef(setAiState);
 
   const isProcessingRef = useRef(false);
@@ -163,10 +160,6 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     sendAudioPartitionRef.current = sendAudioPartition;
   }, [sendAudioPartition]);
-
-  useEffect(() => {
-    setSubtitleTextRef.current = setSubtitleText;
-  }, [setSubtitleText]);
 
   useEffect(() => {
     setAiStateRef.current = setAiState;
@@ -255,10 +248,9 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     setPreviousTriggeredProbability(0);
     isProcessingRef.current = false;
 
-    // Restore previous AI state and show helpful misfire message
+    // Restore previous AI state
     setAiStateRef.current(previousAiStateRef.current);
-    setSubtitleTextRef.current(t('error.vadMisfire'));
-  }, [t]);
+  }, []);
 
   /**
    * Update VAD settings and restart if active

@@ -1,9 +1,8 @@
 {
   "general": {
     "language": "en",
-    "showSubtitle": true,
     "imageCompressionQuality": 0.8,
-    "imageMaxWidth": 512
+    "imageMaxWidth": 312
   },
   "websocket": {
     "wsUrl": "ws://127.0.0.1:12393/client-ws",
@@ -18,8 +17,7 @@
   },
   "proactiveSpeak": {
     "allowProactiveSpeak": false,
-    "idleSecondsToSpeak": 5,
-    "allowButtonTrigger": false
+    "idleSecondsToSpeak": 5
   },
   "vad": {
     "micOn": false,

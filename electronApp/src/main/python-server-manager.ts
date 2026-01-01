@@ -74,7 +74,7 @@ export class PythonServerManager {
         console.log('[Python Server] Found existing server instance');
       }
     } catch {
-      // Server not running, that's fine
+      // Server not running, that's fine !
     }
   }
 
@@ -143,7 +143,7 @@ export class PythonServerManager {
           return;
         }
       } catch (error) {
-        // Server not ready yet, continue waiting
+        // Server not ready yet, continue waiting !
       }
 
       await new Promise(resolve => setTimeout(resolve, checkInterval));

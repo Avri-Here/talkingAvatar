@@ -1,6 +1,4 @@
-import {
-  BrowserWindow, screen, shell, ipcMain,
-} from 'electron';
+import { BrowserWindow, screen, shell, ipcMain } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 
@@ -9,30 +7,15 @@ const isMac = process.platform === 'darwin';
 export class WindowManager {
   private window: BrowserWindow | null = null;
 
-  private windowedBounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null = null;
-
   private hoveringComponents: Set<string> = new Set();
-
-  private currentMode: 'window' | 'pet' = 'pet';
 
   private forceIgnoreMouse = false;
 
   constructor() {
-    ipcMain.on('renderer-ready-for-mode-change', (_event, newMode) => {
-      if (newMode === 'pet') {
-        setTimeout(() => {
-          this.continueSetWindowModePet();
-        }, 500);
-      } else {
-        setTimeout(() => {
-          this.continueSetWindowModeWindow();
-        }, 500);
-      }
+    ipcMain.on('renderer-ready-for-mode-change', (_event) => {
+      setTimeout(() => {
+        this.continueSetWindowModePet();
+      }, 500);
     });
 
     ipcMain.on('mode-change-rendered', () => {
@@ -58,7 +41,7 @@ export class WindowManager {
       height: 670,
       show: false,
       transparent: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: '#00000000',
       autoHideMenuBar: true,
       frame: false,
       icon: process.platform === 'win32'
@@ -88,7 +71,7 @@ export class WindowManager {
     });
 
     this.window.webContents.once('did-finish-load', () => {
-      this.setWindowMode('pet');
+      this.setWindowModePet();
     });
 
     return this.window;
@@ -100,34 +83,12 @@ export class WindowManager {
     this.window.on('ready-to-show', () => {
       setTimeout(() => {
         this.window?.show();
-        this.window?.webContents.send(
-          'window-maximized-change',
-          this.window.isMaximized(),
-        );
-        
+
         // Open DevTools in development mode
         if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
           this.window?.webContents.openDevTools({ mode: 'detach' });
         }
       }, 100);
-    });
-
-    this.window.on('maximize', () => {
-      this.window?.webContents.send('window-maximized-change', true);
-    });
-
-    this.window.on('unmaximize', () => {
-      this.window?.webContents.send('window-maximized-change', false);
-    });
-
-    this.window.on('resize', () => {
-      const window = this.getWindow();
-      if (window) {
-        const bounds = window.getBounds();
-        const { width, height } = screen.getPrimaryDisplay().workArea;
-        const isMaximized = bounds.width >= width && bounds.height >= height;
-        window.webContents.send('window-maximized-change', isMaximized);
-      }
     });
 
     this.window.webContents.setWindowOpenHandler((details) => {
@@ -146,58 +107,10 @@ export class WindowManager {
     }
   }
 
-  setWindowMode(mode: 'window' | 'pet'): void {
-    if (!this.window) return;
-
-    this.currentMode = mode;
-    this.window.setOpacity(0);
-
-    if (mode === 'window') {
-      this.setWindowModeWindow();
-    } else {
-      this.setWindowModePet();
-    }
-  }
-
-  private setWindowModeWindow(): void {
-    if (!this.window) return;
-
-    this.window.setAlwaysOnTop(false);
-    this.window.setIgnoreMouseEvents(false);
-    this.window.setSkipTaskbar(false);
-    this.window.setResizable(true);
-    this.window.setFocusable(true);
-    this.window.setAlwaysOnTop(false);
-
-    this.window.setBackgroundColor('#ffffff');
-    this.window.webContents.send('pre-mode-changed', 'window');
-  }
-
-  private continueSetWindowModeWindow(): void {
-    if (!this.window) return;
-    if (this.windowedBounds) {
-      this.window.setBounds(this.windowedBounds);
-    } else {
-      this.window.setSize(900, 670);
-      this.window.center();
-    }
-
-    if (isMac) {
-      this.window.setWindowButtonVisibility(true);
-      this.window.setVisibleOnAllWorkspaces(false, {
-        visibleOnFullScreen: false,
-      });
-    }
-
-    this.window?.setIgnoreMouseEvents(false, { forward: true });
-
-    this.window.webContents.send('mode-changed', 'window');
-  }
-
   private setWindowModePet(): void {
     if (!this.window) return;
 
-    this.windowedBounds = this.window.getBounds();
+    this.window.setOpacity(0);
 
     if (this.window.isFullScreen()) {
       this.window.setFullScreen(false);
@@ -249,7 +162,7 @@ export class WindowManager {
 
     this.window.webContents.send('mode-changed', 'pet');
   }
-  
+
   getWindow(): BrowserWindow | null {
     return this.window;
   }
@@ -259,41 +172,12 @@ export class WindowManager {
 
     if (isMac) {
       this.window.setIgnoreMouseEvents(ignore);
-      // this.window.setIgnoreMouseEvents(ignore, { forward: true });
     } else {
       this.window.setIgnoreMouseEvents(ignore, { forward: true });
     }
   }
 
-  maximizeWindow(): void {
-    if (!this.window) return;
-
-    if (this.isWindowMaximized()) {
-      if (this.windowedBounds) {
-        this.window.setBounds(this.windowedBounds);
-        this.windowedBounds = null;
-        this.window.webContents.send('window-maximized-change', false);
-      }
-    } else {
-      this.windowedBounds = this.window.getBounds();
-      const { width, height } = screen.getPrimaryDisplay().workArea;
-      this.window.setBounds({
-        x: 0, y: 0, width, height,
-      });
-      this.window.webContents.send('window-maximized-change', true);
-    }
-  }
-
-  isWindowMaximized(): boolean {
-    if (!this.window) return false;
-    const bounds = this.window.getBounds();
-    const { width, height } = screen.getPrimaryDisplay().workArea;
-    return bounds.width >= width && bounds.height >= height;
-  }
-
   updateComponentHover(componentId: string, isHovering: boolean): void {
-    if (this.currentMode === 'window') return;
-
     // If force ignore is enabled, don't change the mouse ignore state
     if (this.forceIgnoreMouse) return;
 
@@ -344,10 +228,5 @@ export class WindowManager {
   // Get current force ignore state
   isForceIgnoreMouse(): boolean {
     return this.forceIgnoreMouse;
-  }
-
-  // Get current mode
-  getCurrentMode(): 'window' | 'pet' {
-    return this.currentMode;
   }
 }

@@ -8,27 +8,19 @@ import { useLive2DResize } from "@/hooks/canvas/use-live2d-resize";
 import { useAiState, AiStateEnum } from "@/context/ai-state-context";
 import { useLive2DExpression } from "@/hooks/canvas/use-live2d-expression";
 import { useForceIgnoreMouse } from "@/hooks/utils/use-force-ignore-mouse";
-import { useMode } from "@/context/mode-context";
-
-interface Live2DProps {
-  showSidebar?: boolean;
-}
 
 export const Live2D = memo(
-  ({ showSidebar }: Live2DProps): JSX.Element => {
+  (): JSX.Element => {
     const { forceIgnoreMouse } = useForceIgnoreMouse();
     const { modelInfo } = useLive2DConfig();
-    const { mode } = useMode();
     const internalContainerRef = useRef<HTMLDivElement>(null);
     const { aiState } = useAiState();
     const { resetExpression } = useLive2DExpression();
-    const isPet = mode === 'pet';
 
     // Get canvasRef from useLive2DResize
     const { canvasRef } = useLive2DResize({
       containerRef: internalContainerRef,
       modelInfo,
-      showSidebar,
     });
 
     // Pass canvasRef to useLive2DModel
@@ -79,10 +71,6 @@ export const Live2D = memo(
     };
 
     const handleContextMenu = (e: React.MouseEvent) => {
-      if (!isPet) {
-        return;
-      }
-
       e.preventDefault();
       console.log(
         "[ContextMenu] (Pet Mode) Right-click detected, requesting menu...",
@@ -97,7 +85,7 @@ export const Live2D = memo(
         style={{
           width: "100%",
           height: "100%",
-          pointerEvents: isPet && forceIgnoreMouse ? "none" : "auto",
+          pointerEvents: forceIgnoreMouse ? "none" : "auto",
           overflow: "hidden",
           position: "relative",
           cursor: isDragging ? "grabbing" : "default",
@@ -112,7 +100,7 @@ export const Live2D = memo(
           style={{
             width: "100%",
             height: "100%",
-            pointerEvents: isPet && forceIgnoreMouse ? "none" : "auto",
+            pointerEvents: forceIgnoreMouse ? "none" : "auto",
             display: "block",
             cursor: isDragging ? "grabbing" : "default",
           }}

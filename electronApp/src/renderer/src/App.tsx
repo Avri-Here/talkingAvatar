@@ -2,8 +2,6 @@ import { Box, ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useEffect, useRef, useMemo } from "react";
 import { AiStateProvider } from "./context/ai-state-context";
 import { Live2DConfigProvider } from "./context/live2d-config-context";
-import { SubtitleProvider } from "./context/subtitle-context";
-import { BgUrlProvider } from "./context/bgurl-context";
 import WebSocketHandler from "./services/websocket-handler";
 import { CameraProvider } from "./context/camera-context";
 import { ChatHistoryProvider } from "./context/chat-history-context";
@@ -102,20 +100,16 @@ function AppWithGlobalStyles(): JSX.Element {
               <AiStateProvider>
                 <ProactiveSpeakProvider>
                   <Live2DConfigProvider>
-                    <SubtitleProvider>
-                      <VADProvider>
-                        <BgUrlProvider>
-                          <GroupProvider>
-                            <BrowserProvider>
-                              <WebSocketHandler>
-                                <Toaster />
-                                <AppContent />
-                              </WebSocketHandler>
-                            </BrowserProvider>
-                          </GroupProvider>
-                        </BgUrlProvider>
-                      </VADProvider>
-                    </SubtitleProvider>
+                    <VADProvider>
+                      <GroupProvider>
+                        <BrowserProvider>
+                          <WebSocketHandler>
+                            <Toaster />
+                            <AppContent />
+                          </WebSocketHandler>
+                        </BrowserProvider>
+                      </GroupProvider>
+                    </VADProvider>
                   </Live2DConfigProvider>
                 </ProactiveSpeakProvider>
               </AiStateProvider>

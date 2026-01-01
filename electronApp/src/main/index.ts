@@ -21,25 +21,8 @@ function setupIPC(): void {
     }
   });
 
-  ipcMain.on("get-current-mode", (event) => {
-    event.returnValue = windowManager.getCurrentMode();
-  });
-
-  ipcMain.on("pre-mode-changed", (_event, newMode) => {
-    if (newMode === 'window' || newMode === 'pet') {
-      menuManager.setMode(newMode);
-    }
-  });
-
   ipcMain.on("window-minimize", () => {
     windowManager.getWindow()?.minimize();
-  });
-
-  ipcMain.on("window-maximize", () => {
-    const window = windowManager.getWindow();
-    if (window) {
-      windowManager.maximizeWindow();
-    }
   });
 
   ipcMain.on("window-close", () => {
@@ -120,7 +103,7 @@ app.whenReady().then(async () => {
   }
 
   windowManager = new WindowManager();
-  menuManager = new MenuManager((mode) => windowManager.setWindowMode(mode));
+  menuManager = new MenuManager();
 
   const window = windowManager.createWindow({
     titleBarOverlay: {
@@ -143,18 +126,20 @@ app.whenReady().then(async () => {
     return false;
   });
 
-  // if (process.env.NODE_ENV === "development") {
-  //   globalShortcut.register("F12", () => {
-  //     const window = windowManager.getWindow();
-  //     if (!window) return;
+  if (process.env.NODE_ENV === "development") {
 
-  //     if (window.webContents.isDevToolsOpened()) {
-  //       window.webContents.closeDevTools();
-  //     } else {
-  //       window.webContents.openDevTools();
-  //     }
-  //   });
-  // }
+    globalShortcut.register("F12", () => {
+
+      const window = windowManager.getWindow();
+      if (!window) return;
+
+      if (window.webContents.isDevToolsOpened()) {
+        window.webContents.closeDevTools();
+      } else {
+        window.webContents.openDevTools();
+      }
+    });
+  }
 
   setupIPC();
 
@@ -192,7 +177,7 @@ app.on("before-quit", async () => {
   globalShortcut.unregisterAll();
   
   if (pythonServer) {
-    console.log('[Main] Stopping Python server...');
+    console.log('[Main] Stopping Python server ...');
     await pythonServer.stop();
   }
 });

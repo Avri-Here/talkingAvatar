@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toaster } from '../components/ui/toaster';
 
 export type ModeType = 'window' | 'pet';
 
@@ -15,40 +14,25 @@ export const ModeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mode, setModeState] = useState<ModeType>('pet');
   const isElectron = window.api !== undefined;
 
-  const setMode = (newMode: ModeType) => {
-    if (newMode === 'pet' && !isElectron) {
-      toaster.create({
-        title: "Pet mode unavailable",
-        description: "Pet mode is only available in the desktop application",
-        type: "info",
-        duration: 2000,
-      });
-      return;
-    }
-
-    // Electron-specific mode change
-    if (isElectron && window.api) {
-      (window.api as any).setMode(newMode);
-    } else {
-      setModeState(newMode);
-    }
+  const setMode = (_newMode: ModeType) => {
+    // Mode switching is disabled, always in pet mode
   };
 
-  // Listen for mode changes from main process
+  // Listen for mode changes from main process (handshake for initialization)
   useEffect(() => {
     if (isElectron && window.electron) {
-      const handlePreModeChange = (_event: any, newMode: ModeType) => {
+      const handlePreModeChange = (_event: any) => {
         // Use double requestAnimationFrame to ensure UI is ready
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             // Tell main process we're ready for the actual mode change
-            window.electron?.ipcRenderer.send('renderer-ready-for-mode-change', newMode);
+            window.electron?.ipcRenderer.send('renderer-ready-for-mode-change', 'pet');
           });
         });
       };
 
-      const handleModeChanged = (_event: any, newMode: ModeType) => {
-        setModeState(newMode);
+      const handleModeChanged = (_event: any) => {
+        setModeState('pet');
         // After mode is set, tell main process the UI has been updated
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {

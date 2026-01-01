@@ -1,7 +1,6 @@
 interface AppConfig {
   general: {
     language: string;
-    showSubtitle: boolean;
     imageCompressionQuality: number;
     imageMaxWidth: number;
   };

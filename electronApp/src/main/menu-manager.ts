@@ -2,7 +2,7 @@ import {
   Tray, nativeImage, Menu, BrowserWindow, ipcMain, screen, MenuItemConstructorOptions, app,
 } from 'electron';
 // @ts-expect-error
-import trayIcon from '../../resources/icon.png?asset';
+import trayIcon from '../../resources/sd.png?asset';
 
 export interface ConfigFile {
   filename: string;
@@ -15,7 +15,7 @@ export class MenuManager {
 
   private configFiles: ConfigFile[] = [];
 
-  constructor(private onModeChange: (mode: 'window' | 'pet') => void) {
+  constructor() {
     this.setupContextMenu();
   }
 
@@ -102,15 +102,15 @@ export class MenuManager {
           event.sender.send('interrupt');
         },
       },
-      {
-        label: 'Switch Character',
-        submenu: this.configFiles.map((config) => ({
-          label: config.name,
-          click: () => {
-            event.sender.send('switch-character', config.filename);
-          },
-        })),
-      },
+      // {
+      //   label: 'Switch Character',
+      //   submenu: this.configFiles.map((config) => ({
+      //     label: config.name,
+      //     click: () => {
+      //       event.sender.send('switch-character', config.filename);
+      //     },
+      //   })),
+      // },
       {
         label: 'Toggle Microphone',
         click: () => {
@@ -146,12 +146,6 @@ export class MenuManager {
         });
       }
     });
-  }
-
-  setMode(mode: 'window' | 'pet'): void {
-    // console.log('Setting mode from', this.currentMode, 'to', mode)
-    this.updateTrayMenu();
-    this.onModeChange(mode);
   }
 
   destroy(): void {

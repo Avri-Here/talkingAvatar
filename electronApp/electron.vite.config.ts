@@ -8,14 +8,6 @@ export default defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin(),
-      viteStaticCopy({
-        targets: [
-          {
-            src: normalizePath(resolve(__dirname, 'src/main/skillsAi.png')),
-            dest: './',
-          }
-        ],
-      })
     ],
   },
   preload: {

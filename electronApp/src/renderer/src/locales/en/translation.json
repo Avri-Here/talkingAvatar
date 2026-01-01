@@ -18,7 +18,6 @@
     "general": {
       "language": "Language",
       "useCameraBackground": "Use Camera Background",
-      "showSubtitle": "Show Subtitle",
       "backgroundImage": "Background Image",
       "customBgUrlPlaceholder": "Enter image URL",
       "customBgUrl": "Or enter a custom background URL",

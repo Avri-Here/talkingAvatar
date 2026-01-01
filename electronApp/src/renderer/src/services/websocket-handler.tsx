@@ -2,13 +2,11 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { wsService, MessageEvent } from '@/services/websocket-service';
 import {
-  WebSocketContext, HistoryInfo, defaultWsUrl, defaultBaseUrl,
+  WebSocketContext, defaultWsUrl, defaultBaseUrl,
 } from '@/context/websocket-context';
-import { ModelInfo, useLive2DConfig } from '@/context/live2d-config-context';
-import { useSubtitle } from '@/context/subtitle-context';
+import { useLive2DConfig } from '@/context/live2d-config-context';
 import { audioTaskQueue } from '@/utils/task-queue';
 import { useAudioTask } from '@/components/canvas/live2d';
-import { useBgUrl } from '@/context/bgurl-context';
 import { useConfig } from '@/context/character-config-context';
 import { useChatHistory } from '@/context/chat-history-context';
 import { toaster } from '@/components/ui/toaster';
@@ -35,7 +33,6 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   }, []);
   const { aiState, setAiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
   const { setModelInfo } = useLive2DConfig();
-  const { setSubtitleText } = useSubtitle();
   const {
     clearResponse,
     setForceNewMessage,
@@ -46,8 +43,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
     setHistoryList,
   } = useChatHistory();
   const { addAudioTask } = useAudioTask();
-  const bgUrlContext = useBgUrl();
-  const { confUid, setConfName, setConfUid, setConfigFiles } = useConfig();
+  const { setConfName, setConfUid, setConfigFiles } = useConfig();
   const { setBrowserViewData } = useBrowser();
   const { setSelfUid, setGroupMembers, setIsOwner } = useGroup();
   const { startMic, stopMic, autoStartMicOnConvEnd } = useVAD();
@@ -103,16 +99,13 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         }
         setAiState('idle');
       },
-      'full-text': (msg) => msg.text && setSubtitleText(msg.text),
       'config-files': (msg) => msg.configs && setConfigFiles(msg.configs),
       'config-switched': () => {
         setAiState('idle');
-        setSubtitleText(t('notification.characterLoaded'));
         toaster.create({ title: t('notification.characterSwitched'), type: 'success', duration: 2000 });
         wsService.sendMessage({ type: 'fetch-history-list' });
         wsService.sendMessage({ type: 'create-new-history' });
       },
-      'background-files': (msg) => msg.files && bgUrlContext?.setBackgroundFiles(msg.files),
       audio: (msg) => {
         if (aiState !== 'interrupted' && aiState !== 'listening') {
           addAudioTask({
@@ -131,7 +124,6 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       },
       'new-history-created': (msg) => {
         setAiState('idle');
-        setSubtitleText(t('notification.newConversation'));
         if (msg.history_uid) {
           setCurrentHistoryUid(msg.history_uid);
           setMessages([]);
@@ -184,7 +176,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         }
       }
     };
-  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
+  }, [aiState, addAudioTask, appendHumanMessage, baseUrl, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
 
   const handleWebSocketMessage = useCallback((message: MessageEvent) => {
     const handler = handlersRef.current[message.type];

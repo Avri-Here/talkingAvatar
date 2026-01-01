@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAiState } from '@/context/ai-state-context';
-import { useSubtitle } from '@/context/subtitle-context';
 import { useChatHistory } from '@/context/chat-history-context';
 import { audioTaskQueue } from '@/utils/task-queue';
 import { audioManager } from '@/utils/audio-manager';
@@ -30,7 +29,6 @@ interface AudioTaskOptions {
 export const useAudioTask = () => {
   const { t } = useTranslation();
   const { aiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
-  const { setSubtitleText } = useSubtitle();
   const { appendResponse, appendAIMessage } = useChatHistory();
   const { sendMessage } = useWebSocket();
   const { setExpression } = useLive2DExpression();
@@ -38,7 +36,6 @@ export const useAudioTask = () => {
   // State refs to avoid stale closures
   const stateRef = useRef({
     aiState,
-    setSubtitleText,
     appendResponse,
     appendAIMessage,
   });
@@ -47,7 +44,6 @@ export const useAudioTask = () => {
 
   stateRef.current = {
     aiState,
-    setSubtitleText,
     appendResponse,
     appendAIMessage,
   };
@@ -65,7 +61,6 @@ export const useAudioTask = () => {
   const handleAudioPlayback = (options: AudioTaskOptions): Promise<void> => new Promise((resolve) => {
     const {
       aiState: currentAiState,
-      setSubtitleText: updateSubtitle,
       appendResponse: appendText,
       appendAIMessage: appendAI,
     } = stateRef.current;
@@ -83,9 +78,6 @@ export const useAudioTask = () => {
     if (displayText) {
       appendText(displayText.text);
       appendAI(displayText.text, displayText.name, displayText.avatar);
-      if (audioBase64) {
-        updateSubtitle(displayText.text);
-      }
       if (!forwarded) {
         sendMessage({
           type: "audio-play-start",

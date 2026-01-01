@@ -6,7 +6,6 @@ import { ConfigFile } from '../main/menu-manager';
 declare global {
   interface Window {
     electron: typeof electronAPI;
-    // @ts-ignore
     api: typeof api;
   }
 }
@@ -52,9 +51,6 @@ const api = {
     const handler = (_event: any, filename: string) => callback(filename);
     ipcRenderer.on('switch-character', handler);
     return () => ipcRenderer.removeListener('switch-character', handler);
-  },
-  setMode: (mode: 'window' | 'pet') => {
-    ipcRenderer.send('pre-mode-changed', mode);
   },
   getConfigFiles: () => ipcRenderer.invoke('get-config-files'),
   updateConfigFiles: (files: ConfigFile[]) => {

@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-// 🎭🪟🤖 yourAiRoommate 
+// yourAiRoommate 🎭🪟🤖🥡✨🙋‍♂️🧙‍♂️🧑‍🚀🕵️🤖👻🐽🪟📘🎡🎓🪄🕯️🔦🗃️🎤🖱️👋🔳 yourAiRoommate 
 
 export class SplashManager {
   private splash: BrowserWindow | null = null;
