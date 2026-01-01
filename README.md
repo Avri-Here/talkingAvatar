@@ -1,4 +1,4 @@
-# 🎤 Talking Avatar — AI VTuber Application
+# 🤖 Talking Ai Model — AI VTuber Application - 🎤 !
 
 An AI-powered **VTuber / Talking Avatar** application with real-time voice interaction, built using **Electron + Python**, featuring Live2D animation, speech recognition, text-to-speech, and LLM integration.
 
@@ -6,20 +6,20 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
 
 ## ✨ Demo & Screenshots
 
-### 🎬 Live Demo (Auto-playing GIF)
+### 🎬 Live Demo 
 <p align="center">
   <img src="docImg/vid.gif" width="720" />
 </p>
 
 ---
 
-### 🖼️ Application Screenshots
+### 🪟 Application Screenshots
 
 <table align="center">
   <tr>
-    <th>Home</th>
-    <th>Disk</th>
-    <th>XP Mode</th>
+    <th>🧑‍🚀 Home</th>
+    <th>🙋‍♂️ Disk</th>
+    <th>🎡 XP</th>
   </tr>
   <tr>
     <td><img src="docImg/home.png" width="240" height="240" style="object-fit: cover;"/></td>
@@ -34,12 +34,12 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
 
 <table align="center">
   <tr>
-    <th>Elevated (Sudo)</th>
-    <th>System View</th>
+    <th>✨ Elevated ✨</th>
+    <th>✨ System ✨</th>
   </tr>
   <tr>
-    <td><img src="docImg/sudo.png" width="300" height="180"/></td>
     <td><img src="docImg/xp.png" width="300" height="150"/></td>
+    <td><img src="docImg/sudo.png" width="300" height="180"/></td>
   </tr>
 </table>
 
@@ -62,3 +62,17 @@ The system runs mostly **locally**, is optimized for **low resource usage**, and
 ```bash
 npm run dev
 
+
+
+
+``
+┌─────────────────────────────────────┐
+│ Components:                         │
+│ • LLM: GitHub Models (gpt-4o-mini)  │
+│ • ASR: Whisper.cpp (tiny.en)        │
+│ • TTS: Edge TTS (Free)              │
+│ • Live2D: Character Animation       │
+│ • MCP Tools: time, windowsCli       │
+└─────────────────────────────────────┘
+
+``
