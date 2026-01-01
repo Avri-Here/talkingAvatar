@@ -20,6 +20,10 @@ interface Position {
 const TAP_DURATION_THRESHOLD_MS = 200; // Max duration for a tap
 const DRAG_DISTANCE_THRESHOLD_PX = 5; // Min distance to be considered a drag
 
+// Fade transition settings
+const FADE_OUT_DURATION_MS = 3000; // 3 seconds fade out
+const FADE_IN_DURATION_MS = 1000; // 1 second fade in
+
 // LocalStorage key for saving model position
 const MODEL_POSITION_STORAGE_KEY = 'live2d-model-position';
 
@@ -27,21 +31,116 @@ const MODEL_POSITION_STORAGE_KEY = 'live2d-model-position';
 const savePositionToStorage = (position: { x: number; y: number }) => {
   try {
     localStorage.setItem(MODEL_POSITION_STORAGE_KEY, JSON.stringify(position));
+    // Also notify main process about the position change
+    (window as any).electron?.ipcRenderer?.send('model-position-changed', position);
   } catch (error) {
     console.error('Failed to save position to localStorage:', error);
   }
 };
 
-const loadPositionFromStorage = (): { x: number; y: number } | null => {
+const loadPositionFromStorage = async (): Promise<{ x: number; y: number } | null> => {
   try {
+    // First try localStorage
     const saved = localStorage.getItem(MODEL_POSITION_STORAGE_KEY);
     if (saved) {
       return JSON.parse(saved);
+    }
+    
+    // If not in localStorage, try to get from main process
+    const savedFromMain = await (window as any).electron?.ipcRenderer?.invoke('get-saved-model-position');
+    if (savedFromMain) {
+      // Store in localStorage for faster access next time
+      localStorage.setItem(MODEL_POSITION_STORAGE_KEY, JSON.stringify(savedFromMain));
+      return savedFromMain;
     }
   } catch (error) {
     console.error('Failed to load position from localStorage:', error);
   }
   return null;
+};
+
+// Fade out current model
+const fadeOutModel = (durationMs: number): Promise<void> => {
+  return new Promise((resolve) => {
+    try {
+      const manager = (window as any).LAppLive2DManager?.getInstance?.();
+      if (!manager) {
+        console.log('🔍 [Fade] No Live2D manager found');
+        resolve();
+        return;
+      }
+
+      const model = manager.getModel(0);
+      if (!model) {
+        console.log('🔍 [Fade] No model found');
+        resolve();
+        return;
+      }
+
+      console.log('🌅 [Fade Out] Starting fade out animation');
+      const startTime = Date.now();
+      const startOpacity = model.getOpacity ? model.getOpacity() : 1.0;
+
+      const fadeInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const newOpacity = startOpacity * (1 - progress);
+
+        if (model.setOpacity) {
+          model.setOpacity(newOpacity);
+        }
+
+        if (progress >= 1) {
+          clearInterval(fadeInterval);
+          console.log('✅ [Fade Out] Completed');
+          resolve();
+        }
+      }, 16); // ~60fps
+    } catch (error) {
+      console.error('❌ [Fade Out] Error:', error);
+      resolve();
+    }
+  });
+};
+
+// Fade in new model
+const fadeInModel = (durationMs: number): void => {
+  try {
+    const manager = (window as any).LAppLive2DManager?.getInstance?.();
+    if (!manager) {
+      console.log('🔍 [Fade In] No Live2D manager found');
+      return;
+    }
+
+    const model = manager.getModel(0);
+    if (!model) {
+      console.log('🔍 [Fade In] No model found');
+      return;
+    }
+
+    if (model.setOpacity) {
+      model.setOpacity(0);
+    }
+    
+    console.log('🌄 [Fade In] Starting fade in animation');
+    const startTime = Date.now();
+
+    const fadeInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / durationMs, 1);
+      
+      if (model.setOpacity) {
+        model.setOpacity(progress);
+      }
+
+      if (progress >= 1) {
+        clearInterval(fadeInterval);
+        console.log('✅ [Fade In] Completed');
+      }
+    }, 16); // ~60fps
+  } catch (error) {
+    console.error('❌ [Fade In] Error:', error);
+  }
 };
 
 function parseModelUrl(url: string): { baseUrl: string; modelDir: string; modelFileName: string } {
@@ -152,52 +251,65 @@ export const useLive2DModel = ({
       prevModelUrlRef.current = currentUrl;
       // setIsLoading(true); // Moved above
 
-      try {
-        const { baseUrl, modelDir, modelFileName } = parseModelUrl(currentUrl);
-        console.log('🎨 [Live2D Model] Parsed URL - Base:', baseUrl, 'Dir:', modelDir, 'File:', modelFileName);
+      const switchModel = async () => {
+        try {
+          const { baseUrl, modelDir, modelFileName } = parseModelUrl(currentUrl);
+          console.log('🎨 [Live2D Model] Parsed URL - Base:', baseUrl, 'Dir:', modelDir, 'File:', modelFileName);
 
-        if (baseUrl && modelDir) {
-          console.log('🎨 [Live2D Model] Updating model config...');
-          
-          // Release current instance immediately to hide old model
-          if ((window as any).LAppLive2DManager?.releaseInstance) {
-            (window as any).LAppLive2DManager.releaseInstance();
-          }
-
-          updateModelConfig(baseUrl, modelDir, modelFileName, Number(modelInfo.kScale));
-
-          setTimeout(() => {
-            console.log('🎨 [Live2D Model] Initializing Live2D...');
-            initializeLive2D();
+          if (baseUrl && modelDir) {
+            console.log('🎨 [Live2D Model] Updating model config...');
             
-            // Restore position from localStorage immediately after model loads
+            // Fade out the current model before releasing it
+            const hasCurrentModel = (window as any).LAppLive2DManager?.getInstance;
+            if (hasCurrentModel) {
+              console.log('🌅 [Live2D Model] Fading out current model...');
+              await fadeOutModel(FADE_OUT_DURATION_MS);
+            }
+            
+            // Release current instance after fade out
+            if ((window as any).LAppLive2DManager?.releaseInstance) {
+              (window as any).LAppLive2DManager.releaseInstance();
+            }
+
+            updateModelConfig(baseUrl, modelDir, modelFileName, Number(modelInfo.kScale));
+
             setTimeout(() => {
+              console.log('🎨 [Live2D Model] Initializing Live2D...');
+              initializeLive2D();
               
-              const savedPosition = loadPositionFromStorage();
-              if (savedPosition) {
-                console.log('🔄 [Live2D Model] Restoring saved position from storage:', savedPosition);
-                setModelPosition(savedPosition.x, savedPosition.y);
-                modelPositionRef.current = { ...savedPosition };
-                setPosition(savedPosition);
+              // Restore position from localStorage immediately after model loads
+              setTimeout(async () => {
+                const savedPosition = await loadPositionFromStorage();
+                if (savedPosition) {
+                  console.log('🔄 [Live2D Model] Restoring saved position from storage:', savedPosition);
+                  setModelPosition(savedPosition.x, savedPosition.y);
+                  modelPositionRef.current = { ...savedPosition };
+                  setPosition(savedPosition);
+                }
                 
-                // Wait a bit more to ensure position is applied before showing model
+                // Fade in the new model
                 setTimeout(() => {
-                  setIsLoading(false);
-                }, 150);
-              } else {
-                console.log('🎨 [Live2D Model] No saved position, using default');
-                setIsLoading(false);
-              }
-            }, 100);
-          }, 500);
-        } else {
-          console.warn('⚠️ [Live2D Model] Missing baseUrl or modelDir!');
+                  console.log('🌄 [Live2D Model] Fading in new model...');
+                  fadeInModel(FADE_IN_DURATION_MS);
+                  
+                  // Hide loading after fade in starts
+                  setTimeout(() => {
+                    setIsLoading(false);
+                  }, 300);
+                }, 100);
+              }, 100);
+            }, 200);
+          } else {
+            console.warn('⚠️ [Live2D Model] Missing baseUrl or modelDir!');
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('❌ [Live2D Model] Error processing model URL:', error);
           setIsLoading(false);
         }
-      } catch (error) {
-        console.error('❌ [Live2D Model] Error processing model URL:', error);
-        setIsLoading(false);
-      }
+      };
+
+      switchModel();
     }
   }, [modelInfo?.url, modelInfo?.kScale]);
 
@@ -234,9 +346,9 @@ export const useLive2DModel = ({
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       // Load position from localStorage or use default
-      const savedPosition = loadPositionFromStorage();
+      const savedPosition = await loadPositionFromStorage();
       
       if (savedPosition) {
         console.log('📍 [Live2D Model] Loading saved position from storage:', savedPosition);

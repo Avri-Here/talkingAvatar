@@ -4,6 +4,8 @@ import { WindowManager } from "./window-manager";
 import { MenuManager } from "./menu-manager";
 import { PythonServerManager } from "./python-server-manager";
 import { SplashManager } from "./splash-manager";
+import * as path from 'path';
+import * as fs from 'fs';
 
 let windowManager: WindowManager;
 let menuManager: MenuManager;
@@ -84,6 +86,29 @@ function setupIPC(): void {
         });
       }, 3000);
     }
+  });
+
+  ipcMain.on('model-position-changed', (_event, position: { x: number; y: number }) => {
+    try {
+      const positionFilePath = path.join(app.getPath('userData'), 'model-position.json');
+      fs.writeFileSync(positionFilePath, JSON.stringify(position, null, 2));
+      console.log('[Main] Model position saved:', position);
+    } catch (error) {
+      console.error('[Main] Failed to save model position:', error);
+    }
+  });
+
+  ipcMain.handle('get-saved-model-position', () => {
+    try {
+      const positionFilePath = path.join(app.getPath('userData'), 'model-position.json');
+      if (fs.existsSync(positionFilePath)) {
+        const data = fs.readFileSync(positionFilePath, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[Main] Failed to read saved position:', error);
+    }
+    return null;
   });
 }
 

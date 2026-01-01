@@ -1,18 +1,75 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, screen, app } from 'electron';
+import * as path from 'path';
+import * as fs from 'fs';
 // yourAiRoommate 🎭🪟🤖🥡✨🙋‍♂️🧙‍♂️🧑‍🚀🕵️🤖👻🐽🪟📘🎡🎓🪄🕯️🔦🗃️🎤🖱️👋🔳 yourAiRoommate 
+
+interface ModelPosition {
+  x: number;
+  y: number;
+}
 
 export class SplashManager {
   private splash: BrowserWindow | null = null;
+  private positionFilePath: string;
+
+  constructor() {
+    this.positionFilePath = path.join(app.getPath('userData'), 'model-position.json');
+  }
+
+  private getSavedModelPosition(): ModelPosition | null {
+    try {
+      if (fs.existsSync(this.positionFilePath)) {
+        const data = fs.readFileSync(this.positionFilePath, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[Splash] Failed to read saved position:', error);
+    }
+    return null;
+  }
+
+  private calculateScreenPosition(): { x: number; y: number } {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width, height } = primaryDisplay.workAreaSize;
+    
+    const savedPosition = this.getSavedModelPosition();
+    
+    if (savedPosition) {
+      // Convert model position (-1 to 1) to screen coordinates
+      // Model position is in normalized coordinates where (0,0) is center
+      const screenX = Math.round((width / 2) + (savedPosition.x * width / 2));
+      const screenY = Math.round((height / 2) - (savedPosition.y * height / 2));
+      
+      // Center the splash on the model position
+      const splashWidth = 200;
+      const splashHeight = 190;
+      
+      return {
+        x: Math.max(0, Math.min(screenX - splashWidth / 2, width - splashWidth)),
+        y: Math.max(0, Math.min(screenY - splashHeight / 2, height - splashHeight))
+      };
+    }
+    
+    // Default to center if no saved position
+    return {
+      x: Math.round((width - 200) / 2),
+      y: Math.round((height - 190) / 2)
+    };
+  }
 
   createSplash(): BrowserWindow {
+    const position = this.calculateScreenPosition();
+    
     this.splash = new BrowserWindow({
       width: 200,
       height: 190,
+      x: position.x,
+      y: position.y,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
       skipTaskbar: true,
-      center: true,
+      center: false,
       resizable: false,
       movable: true,
       webPreferences: {
@@ -131,7 +188,7 @@ export class SplashManager {
 
   async close(): Promise<void> {
     if (this.splash) {
-      // await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 700));
       this.splash.close();
       this.splash = null;
     }
@@ -139,6 +196,15 @@ export class SplashManager {
 
   getSplash(): BrowserWindow | null {
     return this.splash;
+  }
+
+  saveModelPosition(position: ModelPosition): void {
+    try {
+      fs.writeFileSync(this.positionFilePath, JSON.stringify(position, null, 2));
+      console.log('[Splash] Model position saved:', position);
+    } catch (error) {
+      console.error('[Splash] Failed to save model position:', error);
+    }
   }
 }
 
