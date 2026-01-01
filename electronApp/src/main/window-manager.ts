@@ -98,16 +98,18 @@ export class WindowManager {
     if (!this.window) return;
 
     this.window.on('ready-to-show', () => {
-      this.window?.show();
-      this.window?.webContents.send(
-        'window-maximized-change',
-        this.window.isMaximized(),
-      );
-      
-      // Open DevTools in development mode
-      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-        this.window?.webContents.openDevTools({ mode: 'detach' });
-      }
+      setTimeout(() => {
+        this.window?.show();
+        this.window?.webContents.send(
+          'window-maximized-change',
+          this.window.isMaximized(),
+        );
+        
+        // Open DevTools in development mode
+        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+          this.window?.webContents.openDevTools({ mode: 'detach' });
+        }
+      }, 100);
     });
 
     this.window.on('maximize', () => {

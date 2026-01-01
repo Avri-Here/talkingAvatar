@@ -19,6 +19,7 @@ import { GroupProvider } from "./context/group-context";
 import { BrowserProvider } from "./context/browser-context";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import { ModeProvider } from "./context/mode-context";
+import { ServerStatusIndicator } from "./components/ServerStatus";
 
 function AppContent(): JSX.Element {
   const live2dContainerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +61,7 @@ function AppContent(): JSX.Element {
         <Live2D />
       </Box>
       <InputSubtitle />
+      <ServerStatusIndicator />
     </>
   );
 }

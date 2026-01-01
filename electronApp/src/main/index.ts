@@ -1,11 +1,15 @@
 /* eslint-disable no-shadow */
-import { app, ipcMain, globalShortcut, desktopCapturer } from "electron";
+import { app, ipcMain, globalShortcut, desktopCapturer, dialog } from "electron";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { WindowManager } from "./window-manager";
 import { MenuManager } from "./menu-manager";
+import { PythonServerManager } from "./python-server-manager";
+import { SplashManager } from "./splash-manager";
 
 let windowManager: WindowManager;
 let menuManager: MenuManager;
+let pythonServer: PythonServerManager;
+let splashManager: SplashManager;
 let isQuitting = false;
 
 function setupIPC(): void {
@@ -71,10 +75,50 @@ function setupIPC(): void {
     const sources = await desktopCapturer.getSources({ types: ['screen'] });
     return sources[0].id;
   });
+
+  ipcMain.handle('get-server-status', () => {
+    return pythonServer.getStatus();
+  });
+
+  ipcMain.handle('get-server-url', () => {
+    return pythonServer.getServerUrl();
+  });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron");
+
+  splashManager = new SplashManager();
+  splashManager.createSplash();
+  
+  pythonServer = new PythonServerManager();
+  
+  console.log('[Main] Starting Python server...');
+  splashManager.updateStatus('Initializing Python environment...');
+  
+  try {
+    await pythonServer.start();
+    console.log('[Main] Python server started successfully');
+    splashManager.updateStatus('Server ready! Loading interface...');
+    await new Promise(resolve => setTimeout(resolve, 500));
+  } catch (error) {
+    console.error('[Main] Failed to start Python server:', error);
+    splashManager.close();
+    
+    const result = await dialog.showMessageBox({
+      type: 'error',
+      title: 'Server Error',
+      message: 'Failed to start Python server',
+      detail: `Error: ${error}\n\nThe application may not work correctly. Do you want to continue?`,
+      buttons: ['Exit', 'Continue Anyway'],
+      defaultId: 0
+    });
+    
+    if (result.response === 0) {
+      app.quit();
+      return;
+    }
+  }
 
   windowManager = new WindowManager();
   menuManager = new MenuManager((mode) => windowManager.setWindowMode(mode));
@@ -87,6 +131,10 @@ app.whenReady().then(() => {
     },
   });
   menuManager.createTray();
+
+  window.once('ready-to-show', () => {
+    splashManager.close();
+  });
 
   window.on("close", (event) => {
     if (!isQuitting) {
@@ -139,8 +187,13 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.on("before-quit", () => {
+app.on("before-quit", async () => {
   isQuitting = true;
   menuManager.destroy();
   globalShortcut.unregisterAll();
+  
+  if (pythonServer) {
+    console.log('[Main] Stopping Python server...');
+    await pythonServer.stop();
+  }
 });
