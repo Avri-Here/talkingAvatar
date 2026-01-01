@@ -1,0 +1,38 @@
+{
+  "general": {
+    "language": "en",
+    "showSubtitle": true,
+    "imageCompressionQuality": 0.8,
+    "imageMaxWidth": 512
+  },
+  "websocket": {
+    "wsUrl": "ws://127.0.0.1:12393/client-ws",
+    "baseUrl": "http://127.0.0.1:12393"
+  },
+  "background": {
+    "backgroundUrl": "http://127.0.0.1:12393/bg/ceiling-window-room-night.jpeg",
+    "useCameraBackground": false
+  },
+  "character": {
+    "configFilename": ""
+  },
+  "proactiveSpeak": {
+    "allowProactiveSpeak": false,
+    "idleSecondsToSpeak": 5,
+    "allowButtonTrigger": false
+  },
+  "vad": {
+    "micOn": false,
+    "autoStopMic": false,
+    "autoStartMicOn": false,
+    "autoStartMicOnConvEnd": false,
+    "positiveSpeechThreshold": 50,
+    "negativeSpeechThreshold": 35,
+    "redemptionFrames": 35
+  },
+  "live2d": {
+    "scrollToResize": true,
+    "pointerInteractive": true
+  }
+}
+

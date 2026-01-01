@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 import {
-  createContext, useContext, useRef, useCallback, useEffect, useReducer, useMemo,
+  createContext, useContext, useRef, useCallback, useEffect, useReducer, useMemo, useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MicVAD } from '@ricky0123/vad-web';
@@ -9,7 +9,7 @@ import { audioTaskQueue } from '@/utils/task-queue';
 import { useSendAudio } from '@/hooks/utils/use-send-audio';
 import { SubtitleContext } from './subtitle-context';
 import { AiStateContext, AiState } from './ai-state-context';
-import { useLocalStorage } from '@/hooks/utils/use-local-storage';
+import { loadConfig } from '@/utils/config-loader';
 import { toaster } from '@/components/ui/toaster';
 
 /**
@@ -105,32 +105,34 @@ export const VADContext = createContext<VADState | null>(null);
  */
 export function VADProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
-  // Refs for VAD instance and state
   const vadRef = useRef<MicVAD | null>(null);
   const previousTriggeredProbabilityRef = useRef(0);
   const previousAiStateRef = useRef<AiState>('idle');
 
-  // Persistent state management
-  const [micOn, setMicOn] = useLocalStorage('micOn', DEFAULT_VAD_STATE.micOn);
+  const [micOn, setMicOn] = useState(DEFAULT_VAD_STATE.micOn);
   const autoStopMicRef = useRef(true);
-  const [autoStopMic, setAutoStopMicState] = useLocalStorage(
-    'autoStopMic',
-    DEFAULT_VAD_STATE.autoStopMic,
-  );
-  const [settings, setSettings] = useLocalStorage<VADSettings>(
-    'vadSettings',
-    DEFAULT_VAD_SETTINGS,
-  );
-  const [autoStartMicOn, setAutoStartMicOnState] = useLocalStorage(
-    'autoStartMicOn',
-    DEFAULT_VAD_STATE.autoStartMicOn,
-  );
+  const [autoStopMic, setAutoStopMicState] = useState(DEFAULT_VAD_STATE.autoStopMic);
+  const [settings, setSettings] = useState<VADSettings>(DEFAULT_VAD_SETTINGS);
+  const [autoStartMicOn, setAutoStartMicOnState] = useState(DEFAULT_VAD_STATE.autoStartMicOn);
   const autoStartMicRef = useRef(false);
-  const [autoStartMicOnConvEnd, setAutoStartMicOnConvEndState] = useLocalStorage(
-    'autoStartMicOnConvEnd',
-    DEFAULT_VAD_STATE.autoStartMicOnConvEnd,
-  );
+  const [autoStartMicOnConvEnd, setAutoStartMicOnConvEndState] = useState(DEFAULT_VAD_STATE.autoStartMicOnConvEnd);
   const autoStartMicOnConvEndRef = useRef(false);
+
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setMicOn(config.vad.micOn);
+      setAutoStopMicState(config.vad.autoStopMic);
+      setSettings({
+        positiveSpeechThreshold: config.vad.positiveSpeechThreshold,
+        negativeSpeechThreshold: config.vad.negativeSpeechThreshold,
+        redemptionFrames: config.vad.redemptionFrames,
+      });
+      setAutoStartMicOnState(config.vad.autoStartMicOn);
+      setAutoStartMicOnConvEndState(config.vad.autoStartMicOnConvEnd);
+    }).catch((error) => {
+      console.error('Failed to load VAD config:', error);
+    });
+  }, []);
 
   // Force update mechanism for ref updates
   const [, forceUpdate] = useReducer((x) => x + 1, 0);

@@ -17,16 +17,25 @@ import { useChatHistory } from '@/context/chat-history-context';
 import { toaster } from '@/components/ui/toaster';
 import { useVAD } from '@/context/vad-context';
 import { AiState, useAiState } from "@/context/ai-state-context";
-import { useLocalStorage } from '@/hooks/utils/use-local-storage';
 import { useGroup } from '@/context/group-context';
 import { useInterrupt } from '@/hooks/utils/use-interrupt';
 import { useBrowser } from '@/context/browser-context';
+import { loadConfig } from '@/utils/config-loader';
 
 function WebSocketHandler({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const [wsState, setWsState] = useState<string>('CLOSED');
-  const [wsUrl, setWsUrl] = useLocalStorage<string>('wsUrl', defaultWsUrl);
-  const [baseUrl, setBaseUrl] = useLocalStorage<string>('baseUrl', defaultBaseUrl);
+  const [wsUrl, setWsUrl] = useState<string>(defaultWsUrl);
+  const [baseUrl, setBaseUrl] = useState<string>(defaultBaseUrl);
+
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setWsUrl(config.websocket.wsUrl);
+      setBaseUrl(config.websocket.baseUrl);
+    }).catch((error) => {
+      console.error('Failed to load websocket config in handler:', error);
+    });
+  }, []);
   const { aiState, setAiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
   const { setModelInfo } = useLive2DConfig();
   const { setSubtitleText } = useSubtitle();

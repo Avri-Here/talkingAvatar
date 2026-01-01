@@ -1,7 +1,7 @@
 import {
-  createContext, useMemo, useContext, useState, useCallback,
+  createContext, useMemo, useContext, useState, useCallback, useEffect,
 } from 'react';
-import { useLocalStorage } from '@/hooks/utils/use-local-storage';
+import { loadConfig } from '@/utils/config-loader';
 import { useWebSocket } from './websocket-context';
 
 /**
@@ -44,37 +44,35 @@ export function BgUrlProvider({ children }: { children: React.ReactNode }) {
   const { baseUrl } = useWebSocket();
   const DEFAULT_BACKGROUND = `${baseUrl}/bg/ceiling-window-room-night.jpeg`;
 
-  // Local storage for persistent background URL
-  const [backgroundUrl, setBackgroundUrl] = useLocalStorage<string>(
-    'backgroundUrl',
-    DEFAULT_BACKGROUND,
-  );
-
-  // State for background files list
+  const [backgroundUrl, setBackgroundUrl] = useState<string>(DEFAULT_BACKGROUND);
   const [backgroundFiles, setBackgroundFiles] = useState<BackgroundFile[]>([]);
+  const [useCameraBackground, setUseCameraBackground] = useState<boolean>(false);
 
-  // Reset background to default
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setBackgroundUrl(config.background.backgroundUrl);
+      setUseCameraBackground(config.background.useCameraBackground);
+    }).catch((error) => {
+      console.error('Failed to load background config:', error);
+    });
+  }, []);
+
   const resetBackground = useCallback(() => {
     setBackgroundUrl(DEFAULT_BACKGROUND);
-  }, [setBackgroundUrl, DEFAULT_BACKGROUND]);
+  }, [DEFAULT_BACKGROUND]);
 
-  // Add new background file
   const addBackgroundFile = useCallback((file: BackgroundFile) => {
     setBackgroundFiles((prev) => [...prev, file]);
   }, []);
 
-  // Remove background file
   const removeBackgroundFile = useCallback((name: string) => {
     setBackgroundFiles((prev) => prev.filter((file) => file.name !== name));
   }, []);
 
-  // Check if current background is default
   const isDefaultBackground = useMemo(
     () => backgroundUrl === DEFAULT_BACKGROUND,
     [backgroundUrl, DEFAULT_BACKGROUND],
   );
-
-  const [useCameraBackground, setUseCameraBackground] = useState<boolean>(false);
 
   // Memoized context value
   const contextValue = useMemo(() => ({

@@ -1,6 +1,7 @@
 import {
-  createContext, useState, useMemo, useContext, memo,
+  createContext, useState, useMemo, useContext, memo, useEffect,
 } from 'react';
+import { loadConfig } from '@/utils/config-loader';
 
 /**
  * Subtitle context state interface
@@ -41,9 +42,16 @@ export const SubtitleContext = createContext<SubtitleState | null>(null);
  * @param {React.ReactNode} props.children - Child components
  */
 export const SubtitleProvider = memo(({ children }: { children: React.ReactNode }) => {
-  // State management
   const [subtitleText, setSubtitleText] = useState<string>(DEFAULT_SUBTITLE.text);
   const [showSubtitle, setShowSubtitle] = useState<boolean>(true);
+
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setShowSubtitle(config.general.showSubtitle);
+    }).catch((error) => {
+      console.error('Failed to load subtitle config:', error);
+    });
+  }, []);
 
   // Memoized context value
   const contextValue = useMemo(

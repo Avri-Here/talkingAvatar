@@ -1,7 +1,7 @@
 import {
-  createContext, useContext, useState, useMemo,
+  createContext, useContext, useState, useMemo, useEffect,
 } from 'react';
-import { useLocalStorage } from '@/hooks/utils/use-local-storage';
+import { loadConfig } from '@/utils/config-loader';
 import { useConfig } from '@/context/character-config-context';
 
 /**
@@ -108,16 +108,19 @@ export function Live2DConfigProvider({ children }: { children: React.ReactNode }
   const { confUid } = useConfig();
 
   const [isLoading, setIsLoading] = useState(DEFAULT_CONFIG.isLoading);
+  const [modelInfo, setModelInfoState] = useState<ModelInfo | undefined>(DEFAULT_CONFIG.modelInfo);
 
-  const [modelInfo, setModelInfoState] = useLocalStorage<ModelInfo | undefined>(
-    "modelInfo",
-    DEFAULT_CONFIG.modelInfo,
-    {
-      filter: (value) => (value ? { ...value, url: "" } : value),
-    },
-  );
-
-  // const [modelInfo, setModelInfoState] = useState<ModelInfo | undefined>(DEFAULT_CONFIG.modelInfo);
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setModelInfoState((prev) => ({
+        ...prev,
+        scrollToResize: config.live2d.scrollToResize,
+        pointerInteractive: config.live2d.pointerInteractive,
+      } as ModelInfo));
+    }).catch((error) => {
+      console.error('Failed to load Live2D config:', error);
+    });
+  }, []);
 
   const setModelInfo = (info: ModelInfo | undefined) => {
     if (!info?.url) {

@@ -1,11 +1,10 @@
 /* eslint-disable react/require-default-props */
 import { Box, Button, Menu } from '@chakra-ui/react';
 import {
-  FiSettings, FiClock, FiPlus, FiChevronLeft, FiUsers, FiLayers
+  FiClock, FiPlus, FiChevronLeft, FiUsers, FiLayers
 } from 'react-icons/fi';
 import { memo } from 'react';
 import { sidebarStyles } from './sidebar-styles';
-import SettingUI from './setting/setting-ui';
 import ChatHistoryPanel from './chat-history-panel';
 import BottomTab from './bottom-tab';
 import HistoryDrawer from './history-drawer';
@@ -20,7 +19,6 @@ interface SidebarProps {
 }
 
 interface HeaderButtonsProps {
-  onSettingsOpen: () => void
   onNewHistory: () => void
   setMode: (mode: ModeType) => void
   currentMode: 'window' | 'pet'
@@ -82,12 +80,8 @@ const ModeMenu = memo(({ setMode, currentMode, isElectron }: {
 
 ModeMenu.displayName = 'ModeMenu';
 
-const HeaderButtons = memo(({ onSettingsOpen, onNewHistory, setMode, currentMode, isElectron }: HeaderButtonsProps) => (
+const HeaderButtons = memo(({ onNewHistory, setMode, currentMode, isElectron }: HeaderButtonsProps) => (
   <Box display="flex" gap={1}>
-    <Button onClick={onSettingsOpen}>
-      <FiSettings />
-    </Button>
-
     <GroupDrawer>
       <Button>
         <FiUsers />
@@ -111,7 +105,6 @@ const HeaderButtons = memo(({ onSettingsOpen, onNewHistory, setMode, currentMode
 HeaderButtons.displayName = 'HeaderButtons';
 
 const SidebarContent = memo(({ 
-  onSettingsOpen, 
   onNewHistory, 
   setMode, 
   currentMode,
@@ -120,7 +113,6 @@ const SidebarContent = memo(({
   <Box {...sidebarStyles.sidebar.content}>
     <Box {...sidebarStyles.sidebar.header}>
       <HeaderButtons
-        onSettingsOpen={onSettingsOpen}
         onNewHistory={onNewHistory}
         setMode={setMode}
         currentMode={currentMode}
@@ -137,9 +129,6 @@ SidebarContent.displayName = 'SidebarContent';
 // Main component
 function Sidebar({ isCollapsed = false, onToggle }: SidebarProps): JSX.Element {
   const {
-    settingsOpen,
-    onSettingsOpen,
-    onSettingsClose,
     createNewHistory,
     setMode,
     currentMode,
@@ -150,21 +139,12 @@ function Sidebar({ isCollapsed = false, onToggle }: SidebarProps): JSX.Element {
     <Box {...sidebarStyles.sidebar.container(isCollapsed)}>
       <ToggleButton isCollapsed={isCollapsed} onToggle={onToggle} />
 
-      {!isCollapsed && !settingsOpen && (
+      {!isCollapsed && (
         <SidebarContent
-          onSettingsOpen={onSettingsOpen}
           onNewHistory={createNewHistory}
           setMode={setMode}
           currentMode={currentMode}
           isElectron={isElectron}
-        />
-      )}
-
-      {!isCollapsed && settingsOpen && (
-        <SettingUI
-          open={settingsOpen}
-          onClose={onSettingsClose}
-          onToggle={onToggle}
         />
       )}
     </Box>

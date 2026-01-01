@@ -1,7 +1,7 @@
 import {
-  createContext, useContext, ReactNode, useEffect, useRef, useCallback, useMemo,
+  createContext, useContext, ReactNode, useEffect, useRef, useCallback, useMemo, useState,
 } from 'react';
-import { useLocalStorage } from '@/hooks/utils/use-local-storage';
+import { loadConfig } from '@/utils/config-loader';
 import { useTriggerSpeak } from '@/hooks/utils/use-trigger-speak';
 import { useAiState, AiStateEnum } from '@/context/ai-state-context';
 
@@ -25,10 +25,15 @@ const defaultSettings: ProactiveSpeakSettings = {
 export const ProactiveSpeakContext = createContext<ProactiveSpeakContextType | null>(null);
 
 export function ProactiveSpeakProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useLocalStorage<ProactiveSpeakSettings>(
-    'proactiveSpeakSettings',
-    defaultSettings,
-  );
+  const [settings, setSettings] = useState<ProactiveSpeakSettings>(defaultSettings);
+
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setSettings(config.proactiveSpeak);
+    }).catch((error) => {
+      console.error('Failed to load proactive speak config:', error);
+    });
+  }, []);
 
   const { aiState } = useAiState();
   const { sendTriggerSignal } = useTriggerSpeak();
