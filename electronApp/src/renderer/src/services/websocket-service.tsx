@@ -116,6 +116,14 @@ class WebSocketService {
 
   private currentState: 'CONNECTING' | 'OPEN' | 'CLOSING' | 'CLOSED' = 'CLOSED';
 
+  private reconnectTimer: NodeJS.Timeout | null = null;
+
+  private reconnectUrl: string | null = null;
+
+  private shouldAutoReconnect = true;
+
+  private readonly RECONNECT_INTERVAL = 10000;
+
   static getInstance() {
     if (!WebSocketService.instance) {
       WebSocketService.instance = new WebSocketService();
@@ -139,6 +147,10 @@ class WebSocketService {
   }
 
   connect(url: string) {
+    this.clearReconnectTimer();
+    this.reconnectUrl = url;
+    this.shouldAutoReconnect = true;
+
     if (this.ws?.readyState === WebSocket.CONNECTING ||
         this.ws?.readyState === WebSocket.OPEN) {
       this.disconnect();
@@ -152,7 +164,9 @@ class WebSocketService {
       this.ws.onopen = () => {
         this.currentState = 'OPEN';
         this.stateSubject.next('OPEN');
+        this.clearReconnectTimer();
         this.initializeConnection();
+        console.log('WebSocket connected successfully');
       };
 
       this.ws.onmessage = (event) => {
@@ -172,16 +186,21 @@ class WebSocketService {
       this.ws.onclose = () => {
         this.currentState = 'CLOSED';
         this.stateSubject.next('CLOSED');
+        console.log('WebSocket closed');
+        this.scheduleReconnect();
       };
 
-      this.ws.onerror = () => {
+      this.ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
         this.currentState = 'CLOSED';
         this.stateSubject.next('CLOSED');
+        this.scheduleReconnect();
       };
     } catch (error) {
       console.error('Failed to connect to WebSocket:', error);
       this.currentState = 'CLOSED';
       this.stateSubject.next('CLOSED');
+      this.scheduleReconnect();
     }
   }
 
@@ -207,8 +226,34 @@ class WebSocketService {
   }
 
   disconnect() {
+    this.shouldAutoReconnect = false;
+    this.clearReconnectTimer();
     this.ws?.close();
     this.ws = null;
+  }
+
+  private clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  private scheduleReconnect() {
+    if (!this.shouldAutoReconnect || !this.reconnectUrl) {
+      return;
+    }
+
+    this.clearReconnectTimer();
+
+    console.log(`Will attempt to reconnect in ${this.RECONNECT_INTERVAL / 1000} seconds...`);
+
+    this.reconnectTimer = setTimeout(() => {
+      if (this.shouldAutoReconnect && this.reconnectUrl) {
+        console.log('Attempting to reconnect...');
+        this.connect(this.reconnectUrl);
+      }
+    }, this.RECONNECT_INTERVAL);
   }
 
   getCurrentState() {
