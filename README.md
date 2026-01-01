@@ -24,7 +24,7 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
   <tr>
     <td><img src="docImg/home.png" width="240" height="240" style="object-fit: cover;"/></td>
     <td><img src="docImg/disk.png" width="240" height="220" style="object-fit: cover"; /></td>
-    <td><img src="docImg/xp.png" width="240" height="240" style="object-fit: cover"; /></td>
+    <td><img src="docImg/xp.png" width="240" height="270" style="object-fit: cover"; /></td>
   </tr>
 </table>
 
