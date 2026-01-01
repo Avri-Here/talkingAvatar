@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Tabs } from '@chakra-ui/react'
 import { FiCamera, FiMonitor, FiGlobe } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'

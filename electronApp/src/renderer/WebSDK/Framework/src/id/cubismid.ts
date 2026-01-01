@@ -88,7 +88,6 @@ export declare type CubismIdHandle = CubismId;
 
 // Namespace definition for compatibility.
 import * as $ from './cubismid';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismId = $.CubismId;
   export type CubismId = $.CubismId;

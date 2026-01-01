@@ -365,7 +365,6 @@ export abstract class CubismClippingContext {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismrenderer';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismBlendMode = $.CubismBlendMode;
   export type CubismBlendMode = $.CubismBlendMode;

@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-constructed-context-values */
 import {
   createContext, useContext, useState, ReactNode, useCallback,
 } from 'react';

@@ -376,7 +376,6 @@ export enum EvaluationOptionFlag {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmotionjson';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismMotionJson = $.CubismMotionJson;
   export type CubismMotionJson = $.CubismMotionJson;

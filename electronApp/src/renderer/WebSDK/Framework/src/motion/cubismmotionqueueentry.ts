@@ -255,7 +255,6 @@ export class CubismMotionQueueEntry {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmotionqueueentry';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismMotionQueueEntry = $.CubismMotionQueueEntry;
   export type CubismMotionQueueEntry = $.CubismMotionQueueEntry;

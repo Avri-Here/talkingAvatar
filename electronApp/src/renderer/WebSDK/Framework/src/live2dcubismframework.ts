@@ -279,7 +279,6 @@ export enum LogLevel {
 
 // Namespace definition for compatibility.
 import * as $ from './live2dcubismframework';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const Constant = $.Constant;
   export const csmDelete = $.csmDelete;

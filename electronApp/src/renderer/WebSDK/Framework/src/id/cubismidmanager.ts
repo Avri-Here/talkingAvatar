@@ -109,7 +109,6 @@ export class CubismIdManager {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismidmanager';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismIdManager = $.CubismIdManager;
   export type CubismIdManager = $.CubismIdManager;

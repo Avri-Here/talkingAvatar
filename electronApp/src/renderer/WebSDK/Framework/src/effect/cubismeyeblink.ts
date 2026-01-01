@@ -225,7 +225,6 @@ export enum EyeState {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismeyeblink';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismEyeBlink = $.CubismEyeBlink;
   export type CubismEyeBlink = $.CubismEyeBlink;

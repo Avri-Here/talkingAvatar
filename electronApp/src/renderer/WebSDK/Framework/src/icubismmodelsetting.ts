@@ -196,7 +196,6 @@ export abstract class ICubismModelSetting {
 
 // Namespace definition for compatibility.
 import * as $ from './icubismmodelsetting';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const ICubismModelSetting = $.ICubismModelSetting;
   export type ICubismModelSetting = $.ICubismModelSetting;

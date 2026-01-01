@@ -1,4 +1,3 @@
-/* eslint-disable no-use-before-define */
 import {
   createContext, useContext, useRef, useCallback, useEffect, useReducer, useMemo, useState,
 } from 'react';

@@ -1,4 +1,3 @@
-/* eslint-disable react/require-default-props */
 import { Box, Button } from '@chakra-ui/react';
 import {
   FiClock, FiPlus, FiChevronLeft, FiUsers

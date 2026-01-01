@@ -69,7 +69,7 @@ export class MenuManager {
       },
     ]);
 
-    this.tray.setToolTip('Open LLM VTuber');
+    this.tray.setToolTip('yourAiRoommate');
     this.tray.setContextMenu(contextMenu);
   }
 

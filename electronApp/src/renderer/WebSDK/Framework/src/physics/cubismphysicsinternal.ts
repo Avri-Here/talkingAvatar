@@ -223,7 +223,6 @@ export class CubismPhysicsRig {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismphysicsinternal';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismPhysicsInput = $.CubismPhysicsInput;
   export type CubismPhysicsInput = $.CubismPhysicsInput;

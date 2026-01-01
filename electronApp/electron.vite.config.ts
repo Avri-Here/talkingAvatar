@@ -6,7 +6,17 @@ import { normalizePath } from 'vite';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin(),
+      viteStaticCopy({
+        targets: [
+          {
+            src: normalizePath(resolve(__dirname, 'src/main/skillsAi.png')),
+            dest: './',
+          }
+        ],
+      })
+    ],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

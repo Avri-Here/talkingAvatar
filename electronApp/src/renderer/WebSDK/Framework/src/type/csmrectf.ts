@@ -82,7 +82,6 @@ export class csmRect {
 
 // Namespace definition for compatibility.
 import * as $ from './csmrectf';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const csmRect = $.csmRect;
   export type csmRect = $.csmRect;

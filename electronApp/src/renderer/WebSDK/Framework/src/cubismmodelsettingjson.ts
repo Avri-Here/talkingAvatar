@@ -831,7 +831,6 @@ export class CubismModelSettingJson extends ICubismModelSetting {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmodelsettingjson';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismModelSettingJson = $.CubismModelSettingJson;
   export type CubismModelSettingJson = $.CubismModelSettingJson;

@@ -44,7 +44,6 @@ export abstract class ICubismAllocator {
 
 // Namespace definition for compatibility.
 import * as $ from './icubismallcator';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const ICubismAllocator = $.ICubismAllocator;
   export type ICubismAllocator = $.ICubismAllocator;

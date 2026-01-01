@@ -360,7 +360,6 @@ export class CubismMath {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmath';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismMath = $.CubismMath;
   export type CubismMath = $.CubismMath;

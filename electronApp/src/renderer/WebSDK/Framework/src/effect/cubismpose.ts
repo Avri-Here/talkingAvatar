@@ -393,7 +393,6 @@ export class PartData {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismpose';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismPose = $.CubismPose;
   export type CubismPose = $.CubismPose;

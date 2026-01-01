@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import electron from 'electron';
 const { contextBridge, ipcRenderer, desktopCapturer } = electron;
 import { electronAPI } from '@electron-toolkit/preload';

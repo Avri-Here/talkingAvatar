@@ -304,7 +304,6 @@ export class iterator<_KeyT, _ValT> {
 
 // Namespace definition for compatibility.
 import * as $ from './csmmap';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const csmMap = $.csmMap;
   export type csmMap<K, V> = $.csmMap<K, V>;

@@ -33,7 +33,6 @@ export function GroupProvider({ children }: { children: React.ReactNode }) {
   }, [groupMembers, selfUid]);
 
   return (
-    // eslint-disable-next-line react/jsx-no-constructed-context-values
     <GroupContext.Provider value={{
       selfUid,
       groupMembers,

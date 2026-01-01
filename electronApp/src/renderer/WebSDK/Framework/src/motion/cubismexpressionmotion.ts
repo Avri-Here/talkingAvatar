@@ -381,7 +381,6 @@ export class ExpressionParameter {
 import * as $ from './cubismexpressionmotion';
 import { ExpressionParameterValue } from './cubismexpressionmotionmanager';
 import { CubismDefaultParameterId } from '../cubismdefaultparameterid';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismExpressionMotion = $.CubismExpressionMotion;
   export type CubismExpressionMotion = $.CubismExpressionMotion;

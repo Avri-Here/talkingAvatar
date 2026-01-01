@@ -1587,7 +1587,6 @@ export class CubismModel {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmodel';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismModel = $.CubismModel;
   export type CubismModel = $.CubismModel;

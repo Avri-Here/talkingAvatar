@@ -1,6 +1,3 @@
-/* eslint-disable func-names */
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAiState } from '@/context/ai-state-context';

@@ -1,5 +1,4 @@
 // @ts-nocheck
-/* eslint-disable no-underscore-dangle */
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *

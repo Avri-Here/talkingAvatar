@@ -162,7 +162,6 @@ export class CubismTargetPoint {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismtargetpoint';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismTargetPoint = $.CubismTargetPoint;
   export type CubismTargetPoint = $.CubismTargetPoint;

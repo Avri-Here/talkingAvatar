@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/iframe-has-title */
 import { Box, Text } from "@chakra-ui/react";
 import { FiGlobe } from "react-icons/fi";
 import { useState } from "react";

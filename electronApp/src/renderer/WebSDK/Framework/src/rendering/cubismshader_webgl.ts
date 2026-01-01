@@ -1177,7 +1177,6 @@ export const fragmentShaderSrcMaskInvertedPremultipliedAlpha =
 
 // Namespace definition for compatibility.
 import * as $ from './cubismshader_webgl';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismShaderSet = $.CubismShaderSet;
   export type CubismShaderSet = $.CubismShaderSet;

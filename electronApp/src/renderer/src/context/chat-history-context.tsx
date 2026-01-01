@@ -1,4 +1,3 @@
-/* eslint-disable no-else-return */
 import {
   createContext, useContext, useState, useMemo, useCallback,
 } from 'react';

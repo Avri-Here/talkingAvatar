@@ -1,4 +1,3 @@
-/* eslint-disable react/require-default-props */
 import {
   Box, Textarea, IconButton, HStack,
 } from '@chakra-ui/react';

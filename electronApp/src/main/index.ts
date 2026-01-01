@@ -98,7 +98,7 @@ app.whenReady().then(async () => {
   try {
     await pythonServer.start();
     console.log('[Main] Python server started successfully');
-    splashManager.updateStatus('Server ready! Loading interface...');
+    splashManager.updateStatus('Server ready ! Loading interface ...');
     await new Promise(resolve => setTimeout(resolve, 500));
   } catch (error) {
     console.error('[Main] Failed to start Python server:', error);

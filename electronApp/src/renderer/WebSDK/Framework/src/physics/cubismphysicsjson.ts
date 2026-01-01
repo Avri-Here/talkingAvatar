@@ -654,7 +654,6 @@ export class CubismPhysicsJson {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismphysicsjson';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismPhysicsJson = $.CubismPhysicsJson;
   export type CubismPhysicsJson = $.CubismPhysicsJson;

@@ -296,7 +296,6 @@ export class CubismExpressionMotionManager extends CubismMotionQueueManager {
 import * as $ from './cubismexpressionmotionmanager';
 import { CubismMath } from '../math/cubismmath';
 import { CubismDebug, CubismLogError } from '../utils/cubismdebug';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismExpressionMotionManager = $.CubismExpressionMotionManager;
   export type CubismExpressionMotionManager = $.CubismExpressionMotionManager;

@@ -27,7 +27,6 @@ export function ScreenCaptureProvider({ children }: { children: ReactNode }) {
 
         const displayMediaOptions: DisplayMediaStreamOptions = {
           video: {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
             mandatory: {
               chromeMediaSource: "desktop",
@@ -74,7 +73,6 @@ export function ScreenCaptureProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScreenCaptureContext.Provider
-      // eslint-disable-next-line react/jsx-no-constructed-context-values
       value={{
         stream,
         isStreaming,

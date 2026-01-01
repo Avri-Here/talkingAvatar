@@ -1032,7 +1032,6 @@ CubismRenderer.staticRelease = (): void => {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismrenderer_webgl';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismClippingContext = $.CubismClippingContext_WebGL;
   export type CubismClippingContext = $.CubismClippingContext_WebGL;

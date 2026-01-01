@@ -13,7 +13,6 @@ import {
  * Enum for all possible AI states
  * @description Defines all possible states that the AI can be in
  */
-// eslint-disable-next-line no-shadow
 export const enum AiStateEnum {
   /**
    * - Can be triggered to speak proactively

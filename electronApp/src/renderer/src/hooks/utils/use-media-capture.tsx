@@ -1,5 +1,3 @@
-/* eslint-disable operator-assignment */
-/* eslint-disable object-shorthand */
 import { useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCamera } from '@/context/camera-context';

@@ -119,7 +119,6 @@ export class CubismMotionManager extends CubismMotionQueueManager {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmotionmanager';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismMotionManager = $.CubismMotionManager;
   export type CubismMotionManager = $.CubismMotionManager;

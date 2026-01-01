@@ -1,5 +1,3 @@
-/* eslint-disable no-promise-executor-return */
-/* eslint-disable arrow-parens */
 export class TaskQueue {
   private queue: (() => Promise<void>)[] = [];
 

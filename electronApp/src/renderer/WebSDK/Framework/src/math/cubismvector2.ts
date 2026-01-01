@@ -165,7 +165,6 @@ export class CubismVector2 {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismvector2';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismVector2 = $.CubismVector2;
   export type CubismVector2 = $.CubismVector2;

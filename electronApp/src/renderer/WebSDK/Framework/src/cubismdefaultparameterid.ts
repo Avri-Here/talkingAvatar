@@ -65,7 +65,6 @@ export const CubismDefaultParameterId = Object.freeze<Record<string, string>>({
 
 // Namespace definition for compatibility.
 import * as $ from './cubismdefaultparameterid';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const HitAreaBody = $.CubismDefaultParameterId.HitAreaBody;
   export const HitAreaHead = $.CubismDefaultParameterId.HitAreaHead;

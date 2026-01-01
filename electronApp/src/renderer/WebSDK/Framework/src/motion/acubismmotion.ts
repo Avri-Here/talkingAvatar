@@ -355,7 +355,6 @@ export abstract class ACubismMotion {
 import * as $ from './acubismmotion';
 import { CubismIdHandle } from '../id/cubismid';
 import { LogLevel } from '../live2dcubismframework';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const ACubismMotion = $.ACubismMotion;
   export type ACubismMotion = $.ACubismMotion;

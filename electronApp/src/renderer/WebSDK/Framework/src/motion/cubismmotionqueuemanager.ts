@@ -344,7 +344,6 @@ export const InvalidMotionQueueEntryHandleValue: CubismMotionQueueEntryHandle =
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmotionqueuemanager';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismMotionQueueManager = $.CubismMotionQueueManager;
   export type CubismMotionQueueManager = $.CubismMotionQueueManager;

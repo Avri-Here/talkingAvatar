@@ -219,7 +219,6 @@ export class CubismModelMatrix extends CubismMatrix44 {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismmodelmatrix';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismModelMatrix = $.CubismModelMatrix;
   export type CubismModelMatrix = $.CubismModelMatrix;

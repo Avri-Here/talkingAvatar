@@ -115,7 +115,6 @@ export class BreathParameterData {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismbreath';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const BreathParameterData = $.BreathParameterData;
   export type BreathParameterData = $.BreathParameterData;

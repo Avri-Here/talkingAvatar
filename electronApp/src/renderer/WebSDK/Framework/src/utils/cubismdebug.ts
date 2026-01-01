@@ -155,7 +155,6 @@ export class CubismDebug {
 
 // Namespace definition for compatibility.
 import * as $ from './cubismdebug';
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const CubismDebug = $.CubismDebug;
   export type CubismDebug = $.CubismDebug;

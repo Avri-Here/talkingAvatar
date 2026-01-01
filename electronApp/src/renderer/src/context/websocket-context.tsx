@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-constructed-context-values */
 import React, { useContext, useCallback, useState, useEffect } from 'react';
 import { wsService } from '@/services/websocket-service';
 import { loadConfig } from '@/utils/config-loader';
