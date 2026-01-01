@@ -159,11 +159,20 @@ class MCPClient:
         logger.info(
             f"MCPC: Closing client instance and {len(self.active_sessions)} active connections..."
         )
-        await self.exit_stack.aclose()
-        self.active_sessions.clear()
-        self._list_tools_cache.clear()  # Clear cache on close
-        self.exit_stack = AsyncExitStack()
-        logger.info("MCPC: Client instance closed.")
+        try:
+            await self.exit_stack.aclose()
+        except RuntimeError as e:
+            if "cancel scope" in str(e).lower() or "different task" in str(e).lower():
+                logger.debug(f"MCPC: Ignoring known Windows asyncio cleanup issue: {e}")
+            else:
+                raise
+        except Exception as e:
+            logger.warning(f"MCPC: Error during cleanup: {e}")
+        finally:
+            self.active_sessions.clear()
+            self._list_tools_cache.clear()
+            self.exit_stack = AsyncExitStack()
+            logger.info("MCPC: Client instance closed.")
 
     async def __aenter__(self) -> "MCPClient":
         """Enter the async context manager."""
@@ -174,6 +183,7 @@ class MCPClient:
         await self.aclose()
         if exc_type:
             logger.error(f"MCPC: Exception in async context: {exc_value}")
+        return False
 
 
 # if __name__ == "__main__":

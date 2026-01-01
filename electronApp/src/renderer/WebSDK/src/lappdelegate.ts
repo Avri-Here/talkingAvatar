@@ -337,7 +337,6 @@ export class LAppDelegate {
    */
   private _resizeCanvas(): void {
     if (!canvas) {
-      console.warn("Canvas is null, skipping resize");
       return;
     }
     canvas.width = canvas.clientWidth * window.devicePixelRatio;

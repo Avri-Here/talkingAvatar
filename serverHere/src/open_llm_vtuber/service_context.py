@@ -111,7 +111,13 @@ class ServiceContext:
             self.mcp_server_registery = ServerRegistry()
             logger.info("ServerRegistry initialized or referenced.")
 
-            # 2. Use ToolAdapter to get the MCP prompt and tools
+            # 2. Initialize MCPClient first (before fetching tools)
+            self.mcp_client = MCPClient(
+                self.mcp_server_registery, self.send_text, self.client_uid
+            )
+            logger.info("MCPClient initialized for this session.")
+
+            # 3. Use ToolAdapter to get the MCP prompt and tools (reusing MCPClient)
             if not self.tool_adapter:
                 logger.error(
                     "ToolAdapter not initialized before calling _init_mcp_components."
@@ -124,7 +130,8 @@ class ServiceContext:
                     mcp_prompt_string,
                     openai_tools,
                     claude_tools,
-                ) = await self.tool_adapter.get_tools(enabled_servers)
+                    raw_tools_dict,
+                ) = await self.tool_adapter.get_tools(enabled_servers, mcp_client=self.mcp_client)
                 # Store the generated prompt string
                 self.mcp_prompt = mcp_prompt_string
                 logger.info(
@@ -134,11 +141,7 @@ class ServiceContext:
                     f"Dynamically formatted tools - OpenAI: {len(openai_tools)}, Claude: {len(claude_tools)}."
                 )
 
-                # 3. Initialize ToolManager with the fetched formatted tools
-
-                _, raw_tools_dict = await self.tool_adapter.get_server_and_tool_info(
-                    enabled_servers
-                )
+                # 4. Initialize ToolManager with the fetched formatted tools
                 self.tool_manager = ToolManager(
                     formatted_tools_openai=openai_tools,
                     formatted_tools_claude=claude_tools,
@@ -153,18 +156,6 @@ class ServiceContext:
                 # Ensure dependent components are not created if construction fails
                 self.tool_manager = None
                 self.mcp_prompt = "[Error constructing MCP tools/prompt]"
-
-            # 4. Initialize MCPClient
-            if self.mcp_server_registery:
-                self.mcp_client = MCPClient(
-                    self.mcp_server_registery, self.send_text, self.client_uid
-                )
-                logger.info("MCPClient initialized for this session.")
-            else:
-                logger.error(
-                    "MCP enabled but ServerRegistry not available. MCPClient not created."
-                )
-                self.mcp_client = None  # Ensure it's None
 
             # 5. Initialize ToolExecutor
             if self.mcp_client and self.tool_manager:
@@ -188,12 +179,16 @@ class ServiceContext:
             )
 
     async def close(self):
-        """Clean up resources, especially the MCPClient."""
+        """Clean up resources, especially the MCPClient.
+        Note: MCPClient is now shared across sessions, so we don't close it here.
+        It will be closed when the server shuts down.
+        """
         logger.info("Closing ServiceContext resources...")
-        if self.mcp_client:
-            logger.info(f"Closing MCPClient for context instance {id(self)}...")
-            await self.mcp_client.aclose()
-            self.mcp_client = None
+        # Don't close shared MCP client - it's managed by the default_context_cache
+        # if self.mcp_client:
+        #     logger.info(f"Closing MCPClient for context instance {id(self)}...")
+        #     await self.mcp_client.aclose()
+        #     self.mcp_client = None
         if self.agent_engine and hasattr(self.agent_engine, "close"):
             await self.agent_engine.close()  # Ensure agent resources are also closed
         logger.info("ServiceContext closed.")
@@ -211,6 +206,9 @@ class ServiceContext:
         translate_engine: TranslateInterface | None,
         mcp_server_registery: ServerRegistry | None = None,
         tool_adapter: ToolAdapter | None = None,
+        tool_manager: ToolManager | None = None,
+        mcp_prompt: str = "",
+        mcp_client: MCPClient | None = None,
         send_text: Callable = None,
         client_uid: str = None,
     ) -> None:
@@ -235,14 +233,23 @@ class ServiceContext:
         # Load potentially shared components by reference
         self.mcp_server_registery = mcp_server_registery
         self.tool_adapter = tool_adapter
+        self.tool_manager = tool_manager
+        self.mcp_prompt = mcp_prompt
+        self.mcp_client = mcp_client
         self.send_text = send_text
         self.client_uid = client_uid
 
-        # Initialize session-specific MCP components
-        await self._init_mcp_components(
-            self.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp,
-            self.character_config.agent_config.agent_settings.basic_memory_agent.mcp_enabled_servers,
-        )
+        # Initialize session-specific MCP components only if not provided from cache
+        if not self.tool_manager or not self.mcp_client:
+            await self._init_mcp_components(
+                self.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp,
+                self.character_config.agent_config.agent_settings.basic_memory_agent.mcp_enabled_servers,
+            )
+        else:
+            # MCP components shared from cache - initialize ToolExecutor for this session
+            if self.mcp_client and self.tool_manager:
+                self.tool_executor = ToolExecutor(self.mcp_client, self.tool_manager)
+                logger.info("Reusing shared MCP components from cache - ToolExecutor initialized for this session.")
 
         logger.debug(f"Loaded service context with cache: {character_config}")
 

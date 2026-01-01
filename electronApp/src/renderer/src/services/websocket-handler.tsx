@@ -174,7 +174,9 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
             timestamp: msg.timestamp || new Date().toISOString(),
           });
         }
-      }
+      },
+      'full-text': () => {},
+      'background-files': () => {}
     };
   }, [aiState, addAudioTask, appendHumanMessage, baseUrl, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
 

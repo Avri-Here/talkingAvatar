@@ -16,9 +16,14 @@ class ToolAdapter:
         self.server_registery = server_registery or ServerRegistry()
 
     async def get_server_and_tool_info(
-        self, enabled_servers: List[str]
+        self, enabled_servers: List[str], mcp_client: MCPClient = None
     ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, FormattedTool]]:
-        """Fetch tool information from specified enabled MCP servers."""
+        """Fetch tool information from specified enabled MCP servers.
+        
+        Args:
+            enabled_servers: List of server names to fetch info from
+            mcp_client: Optional existing MCPClient to reuse. If None, creates temporary one.
+        """
         servers_info: Dict[str, Dict[str, str]] = {}
         formatted_tools: Dict[str, FormattedTool] = {}
 
@@ -30,9 +35,24 @@ class ToolAdapter:
 
         logger.debug(f"MC: Fetching tool info for enabled servers: {enabled_servers}")
 
-        # Use a single client instance for efficiency
-        async with MCPClient(self.server_registery) as client:
-            for server_name in enabled_servers:
+        # Use provided persistent client (no context manager) or create temporary one
+        if mcp_client:
+            # Reuse existing client - don't close it
+            return await self._fetch_tools_with_client(mcp_client, enabled_servers, servers_info, formatted_tools)
+        else:
+            # Create temporary client with context manager (will auto-close)
+            async with MCPClient(self.server_registery) as client:
+                return await self._fetch_tools_with_client(client, enabled_servers, servers_info, formatted_tools)
+    
+    async def _fetch_tools_with_client(
+        self, 
+        client: MCPClient, 
+        enabled_servers: List[str], 
+        servers_info: Dict[str, Dict[str, str]], 
+        formatted_tools: Dict[str, FormattedTool]
+    ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, FormattedTool]]:
+        """Helper method to fetch tools using a given client."""
+        for server_name in enabled_servers:
                 if server_name not in self.server_registery.servers:
                     logger.warning(
                         f"MC: Enabled server '{server_name}' not found in Server Manager. Skipping."
@@ -73,9 +93,9 @@ class ToolAdapter:
                     logger.error(
                         f"MC: Unexpected error for server '{server_name}': {e}"
                     )
-                    if server_name not in servers_info:
-                        servers_info[server_name] = {}
-                    continue  # Continue to next server
+                if server_name not in servers_info:
+                    servers_info[server_name] = {}
+                continue  # Continue to next server
 
         logger.debug(
             f"MC: Finished fetching tool info. Found {len(formatted_tools)} tools across enabled servers."
@@ -217,16 +237,28 @@ class ToolAdapter:
         return openai_tools, claude_tools
 
     async def get_tools(
-        self, enabled_servers: List[str]
-    ) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Run the dynamic fetching and formatting process."""
+        self, enabled_servers: List[str], mcp_client: MCPClient = None
+    ) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, FormattedTool]]:
+        """Run the dynamic fetching and formatting process.
+        
+        Args:
+            enabled_servers: List of server names to get tools from
+            mcp_client: Optional existing MCPClient to reuse. If provided, connections stay open.
+        
+        Returns:
+            Tuple containing:
+            - mcp_prompt_string: Formatted prompt string for MCP
+            - openai_tools: Tools formatted for OpenAI API
+            - claude_tools: Tools formatted for Claude API
+            - formatted_tools_dict: Raw formatted tools dictionary
+        """
         logger.info(
             f"MC: Running dynamic tool construction for servers: {enabled_servers}"
         )
         servers_info, formatted_tools_dict = await self.get_server_and_tool_info(
-            enabled_servers
+            enabled_servers, mcp_client=mcp_client
         )
         mcp_prompt_string = self.construct_mcp_prompt_string(servers_info)
         openai_tools, claude_tools = self.format_tools_for_api(formatted_tools_dict)
         logger.info("MC: Dynamic tool construction complete.")
-        return mcp_prompt_string, openai_tools, claude_tools
+        return mcp_prompt_string, openai_tools, claude_tools, formatted_tools_dict

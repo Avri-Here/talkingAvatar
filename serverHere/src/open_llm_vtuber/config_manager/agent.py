@@ -30,9 +30,9 @@ class BasicMemoryAgentConfig(I18nMixin, BaseModel):
     ] = Field(..., alias="llm_provider")
 
     faster_first_response: Optional[bool] = Field(True, alias="faster_first_response")
-    segment_method: Literal["regex", "pysbd"] = Field("pysbd", alias="segment_method")
+    segment_method: Literal["regex", "pysbd"] = Field("pysbd", alias="segment_method"   )
     use_mcpp: Optional[bool] = Field(False, alias="use_mcpp")
-    mcp_enabled_servers: Optional[List[str]] = Field([], alias="mcp_enabled_servers")
+    mcp_enabled_servers: Optional[List[str]] = Field(["time", "ddgSearch", "windowsCli"], alias="mcp_enabled_servers")
 
     DESCRIPTIONS: ClassVar[Dict[str, Description]] = {
         "llm_provider": Description(

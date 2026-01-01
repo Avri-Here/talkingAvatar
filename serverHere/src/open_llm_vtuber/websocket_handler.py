@@ -180,6 +180,9 @@ class WebSocketHandler:
             translate_engine=self.default_context_cache.translate_engine,
             mcp_server_registery=self.default_context_cache.mcp_server_registery,
             tool_adapter=self.default_context_cache.tool_adapter,
+            tool_manager=self.default_context_cache.tool_manager,
+            mcp_prompt=self.default_context_cache.mcp_prompt,
+            mcp_client=self.default_context_cache.mcp_client,
             send_text=send_text,
             client_uid=client_uid,
         )

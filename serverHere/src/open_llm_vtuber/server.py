@@ -39,24 +39,14 @@ class CORSStaticFiles(StarletteStaticFiles):
         return response
 
 
-class AvatarStaticFiles(CORSStaticFiles):
-    """
-    Avatar files handler with security restrictions and CORS headers
-    """
-
-    async def get_response(self, path: str, scope):
-        allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".svg"}
-        if not any(path.lower().endswith(ext) for ext in allowed_extensions):
-            return Response("Forbidden file type", status_code=403)
-        return await super().get_response(path, scope)
 
 
 class WebSocketServer:
     """
-    API server for Open-LLM-VTuber. This contains the websocket endpoint for the client, hosts the web tool, and serves static files.
+    API server for Open-LLM-VTuber. This contains the websocket endpoint for the Electron client.
 
     Creates and configures a FastAPI app, registers all routes
-    (WebSocket, web tools, proxy) and mounts static assets with CORS.
+    (WebSocket, web tools, proxy) and mounts cache directory for audio files.
 
     Args:
         config (Config): Application configuration containing system settings.
@@ -106,37 +96,13 @@ class WebSocketServer:
                 init_proxy_route(server_url=server_url),
             )
 
-        # Mount cache directory first (to ensure audio file access)
+        # Mount cache directory for audio file access (needed for Electron client)
         if not os.path.exists("cache"):
             os.makedirs("cache")
         self.app.mount(
             "/cache",
             CORSStaticFiles(directory="cache"),
             name="cache",
-        )
-
-        # Mount static files with CORS-enabled handlers
-        self.app.mount(
-            "/live2dModels",
-            CORSStaticFiles(directory="live2dModels"),
-            name="live2dModels",
-        )
-        self.app.mount(
-            "/bg",
-            CORSStaticFiles(directory="backgrounds"),
-            name="backgrounds",
-        )
-        self.app.mount(
-            "/avatars",
-            AvatarStaticFiles(directory="avatars"),
-            name="avatars",
-        )
-
-        # Mount main frontend last (as catch-all)
-        self.app.mount(
-            "/",
-            CORSStaticFiles(directory="frontend", html=True),
-            name="frontend",
         )
 
     async def initialize(self):

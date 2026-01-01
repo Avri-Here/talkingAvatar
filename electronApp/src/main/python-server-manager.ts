@@ -34,8 +34,8 @@ export class PythonServerManager {
   }
 
   async start(): Promise<void> {
-    if (this.isStarting || this.isRunning) {
-      console.log('[Python Server] Already starting or running');
+    if (this.isStarting) {
+      console.log('[Python Server] Already starting');
       return;
     }
 
@@ -44,13 +44,10 @@ export class PythonServerManager {
     console.log('[Python Server] Server path:', this.serverPath);
 
     try {
-      await this.checkIfAlreadyRunning();
-      
-      if (this.isRunning) {
-        console.log('[Python Server] Server already running, connecting to existing instance');
-        this.isStarting = false;
-        return;
-      }
+      // Always clean up any existing server to ensure we load fresh code
+      console.log('[Python Server] Cleaning up any existing server instances...');
+      await this.killExistingServer();
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       await this.startServerProcess();
       await this.waitForServerReady();
@@ -66,16 +63,64 @@ export class PythonServerManager {
     }
   }
 
-  private async checkIfAlreadyRunning(): Promise<void> {
-    try {
-      const isHealthy = await this.checkHealth();
-      if (isHealthy) {
-        this.isRunning = true;
-        console.log('[Python Server] Found existing server instance');
+  private async killExistingServer(): Promise<void> {
+    const isWindows = process.platform === 'win32';
+    
+    return new Promise((resolve) => {
+      if (isWindows) {
+        // Kill all processes on the specific port
+        const findProcess = spawn('netstat', ['-ano']);
+        let output = '';
+        
+        findProcess.stdout?.on('data', (data: Buffer) => {
+          output += data.toString();
+        });
+        
+        findProcess.on('close', () => {
+          const lines = output.split('\n');
+          const portLine = lines.find(line => 
+            line.includes(`:${this.config.port}`) && line.includes('LISTENING')
+          );
+          
+          if (portLine) {
+            const parts = portLine.trim().split(/\s+/);
+            const pidMatch = parts[parts.length - 1];
+            if (pidMatch && !isNaN(Number(pidMatch))) {
+              console.log(`[Python Server] Killing process ${pidMatch} on port ${this.config.port}`);
+              spawn('taskkill', ['/pid', pidMatch, '/f', '/t']);
+            }
+          }
+          
+          setTimeout(resolve, 2000);
+        });
+
+        findProcess.on('error', () => {
+          console.log('[Python Server] No existing server found');
+          resolve();
+        });
+      } else {
+        // Unix-like systems
+        const lsof = spawn('lsof', ['-ti', `:${this.config.port}`]);
+        let pid = '';
+        
+        lsof.stdout?.on('data', (data: Buffer) => {
+          pid += data.toString().trim();
+        });
+        
+        lsof.on('close', () => {
+          if (pid) {
+            console.log(`[Python Server] Killing process ${pid} on port ${this.config.port}`);
+            spawn('kill', ['-9', pid]);
+          }
+          setTimeout(resolve, 2000);
+        });
+
+        lsof.on('error', () => {
+          console.log('[Python Server] No existing server found');
+          resolve();
+        });
       }
-    } catch {
-      // Server not running, that's fine !
-    }
+    });
   }
 
   private async startServerProcess(): Promise<void> {
