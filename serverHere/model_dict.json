@@ -7,9 +7,9 @@
         "initialXshift": 0,
         "initialYshift": 0,
         "idleMotionGroupName": "Idle",
-        "defaultEmotion": "face_normal_01",
+        "defaultEmotion": "face_smile_02",
         "emotionMap": {
-            "neutral": "face_normal_01",
+            "neutral": "face_smile_02",
             "anger": "face_angry_01",
             "disgust": "face_coldeyes_01",
             "fear": "face_confusion_01",
@@ -20,14 +20,16 @@
         },
         "tapMotions": {
             "HitAreaHead": {
-                "m-afather-nod01": 0.5,
+                "m-afather-nod01": 0.3,
                 "s-common-tilthead01": 0.3,
-                "s-common-tilthead02": 0.2
+                "s-common-tilthead02": 0.2,
+                "face_smile_03": 0.2
             },
             "HitAreaBody": {
-                "s-common-pose01": 0.4,
+                "s-common-pose01": 0.3,
                 "s-common-forward01": 0.3,
-                "m-normal-nod04": 0.3
+                "s-common-blushed01": 0.2,
+                "face_smile_04": 0.2
             }
         }
     },
