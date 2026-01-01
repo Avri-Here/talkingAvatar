@@ -32,6 +32,8 @@ interface AppConfig {
   live2d: {
     scrollToResize: boolean;
     pointerInteractive: boolean;
+    minScale: number;
+    maxScale: number;
   };
 }
 

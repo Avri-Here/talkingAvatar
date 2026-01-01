@@ -3,7 +3,7 @@
         "name": "johan",
         "description": "Johan character model",
         "url": "/live2d-models/johan/sub_mahuyufather_t03.model3.json",
-        "kScale": 0.6,
+        "kScale": 1.5,
         "initialXshift": 0,
         "initialYshift": 0,
         "idleMotionGroupName": "Idle",

@@ -1,11 +1,11 @@
-import { useEffect, useCallback, RefObject, useRef } from 'react';
+import { useEffect, useCallback, RefObject, useRef, useState } from 'react';
 import { ModelInfo } from '@/context/live2d-config-context';
 import { LAppDelegate } from '../../../WebSDK/src/lappdelegate';
 import { LAppLive2DManager } from '../../../WebSDK/src/lapplive2dmanager';
+import { ViewMaxScale, ViewMinScale } from '../../../WebSDK/src/lappdefine';
+import { loadConfig } from '@/utils/config-loader';
 
 // Constants for model scaling behavior
-const MIN_SCALE = 0.1;
-const MAX_SCALE = 5.0;
 const EASING_FACTOR = 0.3; // Controls animation smoothness
 const WHEEL_SCALE_STEP = 0.03; // Scale change per wheel tick
 const DEFAULT_SCALE = 1.0; // Default scale if not specified
@@ -46,6 +46,10 @@ export const useLive2DResize = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isResizingRef = useRef<boolean>(false);
 
+  // Load scale limits from config
+  const [minScale, setMinScale] = useState(ViewMinScale);
+  const [maxScale, setMaxScale] = useState(ViewMaxScale);
+
   // Initialize scale references
   const initialScale = modelInfo?.kScale || DEFAULT_SCALE;
   const lastScaleRef = useRef<number>(initialScale);
@@ -56,6 +60,16 @@ export const useLive2DResize = ({
 
   // Previous container dimensions for change detection
   const lastContainerDimensionsRef = useRef<{width: number, height: number}>({ width: 0, height: 0 });
+
+  // Load scale limits from config
+  useEffect(() => {
+    loadConfig().then((config) => {
+      setMinScale(config.live2d.minScale);
+      setMaxScale(config.live2d.maxScale);
+    }).catch((error) => {
+      console.error('Failed to load scale limits:', error);
+    });
+  }, []);
 
   /**
    * Reset scale state when model changes
@@ -84,8 +98,8 @@ export const useLive2DResize = ({
    */
   const animateEase = useCallback(() => {
     const clampedTargetScale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, targetScaleRef.current),
+      minScale,
+      Math.min(maxScale, targetScaleRef.current),
     );
 
     const currentScale = lastScaleRef.current;
@@ -96,7 +110,7 @@ export const useLive2DResize = ({
     lastScaleRef.current = newScale;
 
     animationFrameRef.current = requestAnimationFrame(animateEase);
-  }, []);
+  }, [minScale, maxScale]);
 
   /**
    * Handles mouse wheel events for scaling
@@ -111,8 +125,8 @@ export const useLive2DResize = ({
 
     const currentActualScale = lastScaleRef.current;
     const newTargetScale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, currentActualScale + increment),
+      minScale,
+      Math.min(maxScale, currentActualScale + increment),
     );
 
     targetScaleRef.current = newTargetScale;
@@ -121,7 +135,7 @@ export const useLive2DResize = ({
       isAnimatingRef.current = true;
       animationFrameRef.current = requestAnimationFrame(animateEase);
     }
-  }, [modelInfo?.scrollToResize, animateEase]);
+  }, [modelInfo?.scrollToResize, animateEase, minScale, maxScale]);
 
   /**
    * Pre-process container resize

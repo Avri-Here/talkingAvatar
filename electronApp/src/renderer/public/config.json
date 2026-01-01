@@ -30,7 +30,9 @@
   },
   "live2d": {
     "scrollToResize": true,
-    "pointerInteractive": true
+    "pointerInteractive": true,
+    "minScale": 0.8,
+    "maxScale": 2.0
   }
 }
 

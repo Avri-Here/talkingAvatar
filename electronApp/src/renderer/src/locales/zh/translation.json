@@ -31,7 +31,13 @@
     },
     "live2d": {
       "pointerInteractive": "鼠标交互",
-      "scrollToResize": "启用滚轮缩放"
+      "scrollToResize": "启用滚轮缩放",
+      "minScale": "最小缩放",
+      "minScalePlaceholder": "输入最小缩放值",
+      "minScaleHelp": "Live2D角色的最小缩放级别。默认为0.8",
+      "maxScale": "最大缩放",
+      "maxScalePlaceholder": "输入最大缩放值",
+      "maxScaleHelp": "Live2D角色的最大缩放级别。默认为2.0"
     },
     "asr": {
       "autoStopMic": "AI开始说话时自动关闭麦克风",

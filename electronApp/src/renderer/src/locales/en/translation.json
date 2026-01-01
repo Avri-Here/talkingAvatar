@@ -33,7 +33,13 @@
     },
     "live2d": {
       "pointerInteractive": "Pointer Interactive",
-      "scrollToResize": "Enable Scroll to Resize"
+      "scrollToResize": "Enable Scroll to Resize",
+      "minScale": "Minimum Scale",
+      "minScalePlaceholder": "Enter minimum scale value",
+      "minScaleHelp": "Minimum zoom level for the Live2D character. Default is 0.8",
+      "maxScale": "Maximum Scale",
+      "maxScalePlaceholder": "Enter maximum scale value",
+      "maxScaleHelp": "Maximum zoom level for the Live2D character. Default is 2.0"
     },
     "asr": {
       "autoStopMic": "Auto Stop Mic When AI Start Speaking",

@@ -555,6 +555,16 @@ export class LAppModel extends CubismUserModel {
 
     //--------------------------------------------------------------------------
     this._model.loadParameters(); // 前回セーブされた状態をロード
+    
+    // Play greeting motion on first load (before checking if motion is finished)
+    if (this._isFirstLoad && this._userTimeSeconds > 0.1) {
+      this._isFirstLoad = false;
+      console.log('🎉 Playing greeting motion on first load');
+      
+      // Start the greeting motion with force priority
+      this.startMotion('s-common-forward01', 0, LAppDefine.PriorityForce);
+    }
+    
     if (this._motionManager.isFinished()) {
       // モーションの再生がない場合、待機モーションの中からランダムで再生する
       this.startRandomMotion(
@@ -1321,6 +1331,7 @@ export class LAppModel extends CubismUserModel {
     this._allMotionCount = 0;
     this._wavFileHandler = new LAppWavFileHandler();
     this._consistency = false;
+    this._isFirstLoad = true;
   }
 
   _modelSetting: ICubismModelSetting; // モデルセッティング情報
@@ -1350,4 +1361,5 @@ export class LAppModel extends CubismUserModel {
   _allMotionCount: number; // モーション総数
   _wavFileHandler: LAppWavFileHandler; //wavファイルハンドラ
   _consistency: boolean; // MOC3一貫性チェック管理用
+  _isFirstLoad: boolean; // First load flag for greeting motion
 }
