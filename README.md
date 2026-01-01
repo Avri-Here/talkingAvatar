@@ -8,7 +8,7 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
 
 ### 🎬 Live Demo 
 <p align="center">
-  <img src="docImg/vid.gif" width="720" />
+  <img src="docImg/vid.gif" width="420" />
 </p>
 
 ---
