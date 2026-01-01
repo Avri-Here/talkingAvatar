@@ -6,7 +6,7 @@
         "kScale": 0.35,
         "initialXshift": 0,
         "initialYshift": 0,
-        "idleMotionGroupName": "face_normal_01",
+        "idleMotionGroupName": "Idle",
         "defaultEmotion": "face_normal_01",
         "emotionMap": {
             "neutral": "face_normal_01",
