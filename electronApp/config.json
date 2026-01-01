@@ -26,7 +26,7 @@
     "autoStartMicOnConvEnd": false,
     "positiveSpeechThreshold": 50,
     "negativeSpeechThreshold": 35,
-    "redemptionFrames": 35
+    "redemptionFrames": 40
   },
   "live2d": {
     "scrollToResize": true,

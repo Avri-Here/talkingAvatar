@@ -78,7 +78,7 @@ interface VADState {
 const DEFAULT_VAD_SETTINGS: VADSettings = {
   positiveSpeechThreshold: 50,
   negativeSpeechThreshold: 35,
-  redemptionFrames: 20, // Reduced from 35 for faster response
+  redemptionFrames: 40,
 };
 
 const DEFAULT_VAD_STATE = {
@@ -117,15 +117,16 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     loadConfig().then((config) => {
-      setMicOn(config.vad.micOn);
+
+      setMicOn(false);
       setAutoStopMicState(config.vad.autoStopMic);
       setSettings({
         positiveSpeechThreshold: config.vad.positiveSpeechThreshold,
         negativeSpeechThreshold: config.vad.negativeSpeechThreshold,
         redemptionFrames: config.vad.redemptionFrames,
       });
-      setAutoStartMicOnState(config.vad.autoStartMicOn);
-      setAutoStartMicOnConvEndState(config.vad.autoStartMicOnConvEnd);
+      setAutoStartMicOnState(false);
+      setAutoStartMicOnConvEndState(false);
     }).catch((error) => {
       console.error('Failed to load VAD config:', error);
     });
@@ -146,6 +147,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   const setAiStateRef = useRef(setAiState);
 
   const isProcessingRef = useRef(false);
+  const audioBufferRef = useRef<Float32Array[]>([]);
 
   // Update refs when dependencies change
   useEffect(() => {
@@ -166,15 +168,15 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     autoStopMicRef.current = autoStopMic;
-  }, []);
+  }, [autoStopMic]);
 
   useEffect(() => {
     autoStartMicRef.current = autoStartMicOn;
-  }, []);
+  }, [autoStartMicOn]);
 
   useEffect(() => {
     autoStartMicOnConvEndRef.current = autoStartMicOnConvEnd;
-  }, []);
+  }, [autoStartMicOnConvEnd]);
 
   /**
    * Update previous triggered probability and force re-render
@@ -192,6 +194,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     // Save current AI state but DON'T change to listening yet
     previousAiStateRef.current = aiStateRef.current;
     isProcessingRef.current = true;
+    audioBufferRef.current = [];
     // Don't change state here - wait for onSpeechRealStart
   }, []);
 
@@ -212,9 +215,12 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   /**
    * Handle frame processing event
    */
-  const handleFrameProcessed = useCallback((probs: { isSpeech: number }) => {
+  const handleFrameProcessed = useCallback((probs: { isSpeech: number }, frame: Float32Array) => {
     if (probs.isSpeech > previousTriggeredProbabilityRef.current) {
       setPreviousTriggeredProbability(probs.isSpeech);
+    }
+    if (isProcessingRef.current) {
+      audioBufferRef.current.push(frame);
     }
   }, []);
 
@@ -235,6 +241,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     setPreviousTriggeredProbability(0);
     sendAudioPartitionRef.current(audio);
     isProcessingRef.current = false;
+    audioBufferRef.current = [];
     setAiStateRef.current("thinking-speaking");
   }, []);
 
@@ -246,6 +253,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     console.log('VAD misfire detected');
     setPreviousTriggeredProbability(0);
     isProcessingRef.current = false;
+    audioBufferRef.current = [];
 
     // Restore previous AI state
     setAiStateRef.current(previousAiStateRef.current);
@@ -311,6 +319,20 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   const stopMic = useCallback(() => {
     console.log('Stopping VAD');
     if (vadRef.current) {
+      // If we were processing speech, send what we have
+      if (isProcessingRef.current && audioBufferRef.current.length > 0) {
+        console.log('Sending remaining audio buffer on manual stop');
+        const totalLength = audioBufferRef.current.reduce((acc, curr) => acc + curr.length, 0);
+        const audio = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of audioBufferRef.current) {
+          audio.set(chunk, offset);
+          offset += chunk.length;
+        }
+        sendAudioPartitionRef.current(audio);
+        setAiStateRef.current("thinking-speaking");
+      }
+
       vadRef.current.pause();
       vadRef.current.destroy();
       vadRef.current = null;
@@ -321,6 +343,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     }
     setMicOn(false);
     isProcessingRef.current = false;
+    audioBufferRef.current = [];
   }, []);
 
   /**

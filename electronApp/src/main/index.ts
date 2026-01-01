@@ -175,20 +175,25 @@ app.whenReady().then(async () => {
     return false;
   });
 
-  if (process.env.NODE_ENV === "development") {
+  // if (process.env.NODE_ENV === "development") {
+  //   globalShortcut.register("F12", () => {
+  //     const window = windowManager.getWindow();
+  //     if (!window) return;
 
-    globalShortcut.register("F12", () => {
+  //     if (window.webContents.isDevToolsOpened()) {
+  //       window.webContents.closeDevTools();
+  //     } else {
+  //       window.webContents.openDevTools();
+  //     }
+  //   });
+  // }
 
-      const window = windowManager.getWindow();
-      if (!window) return;
-
-      if (window.webContents.isDevToolsOpened()) {
-        window.webContents.closeDevTools();
-      } else {
-        window.webContents.openDevTools();
-      }
-    });
-  }
+  globalShortcut.register("Alt+R", () => {
+    const window = windowManager.getWindow();
+    if (window) {
+      window.webContents.send("micToggle");
+    }
+  });
 
   setupIPC();
 

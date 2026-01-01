@@ -75,7 +75,7 @@ export function useIpcHandlers() {
   useEffect(() => {
     if (!window.electron?.ipcRenderer) return;
 
-    window.electron.ipcRenderer.removeAllListeners("mic-toggle");
+    window.electron.ipcRenderer.removeAllListeners("micToggle");
     window.electron.ipcRenderer.removeAllListeners("interrupt");
     window.electron.ipcRenderer.removeAllListeners("toggle-scroll-to-resize");
     window.electron.ipcRenderer.removeAllListeners("switch-character");
@@ -83,7 +83,7 @@ export function useIpcHandlers() {
     window.electron.ipcRenderer.removeAllListeners("force-ignore-mouse-changed");
     window.electron.ipcRenderer.removeAllListeners("new-chat");
 
-    window.electron.ipcRenderer.on("mic-toggle", micToggleHandler);
+    window.electron.ipcRenderer.on("micToggle", micToggleHandler);
     window.electron.ipcRenderer.on("interrupt", interruptHandler);
     window.electron.ipcRenderer.on(
       "toggle-scroll-to-resize",
@@ -101,7 +101,7 @@ export function useIpcHandlers() {
     window.electron.ipcRenderer.on("new-chat", newChatHandler);
 
     return () => {
-      window.electron?.ipcRenderer.removeAllListeners("mic-toggle");
+      window.electron?.ipcRenderer.removeAllListeners("micToggle");
       window.electron?.ipcRenderer.removeAllListeners("interrupt");
       window.electron?.ipcRenderer.removeAllListeners(
         "toggle-scroll-to-resize",

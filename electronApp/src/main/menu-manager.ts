@@ -118,7 +118,7 @@ export class MenuManager {
       {
         label: 'Toggle Microphone',
         click: () => {
-          event.sender.send('mic-toggle');
+          event.sender.send('micToggle');
         },
       },
       {
