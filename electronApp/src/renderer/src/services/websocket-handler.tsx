@@ -39,46 +39,32 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   const { aiState, setAiState, backendSynthComplete, setBackendSynthComplete } = useAiState();
   const { setModelInfo } = useLive2DConfig();
   const { setSubtitleText } = useSubtitle();
-  const { clearResponse, setForceNewMessage, appendHumanMessage, appendOrUpdateToolCallMessage } = useChatHistory();
+  const {
+    clearResponse,
+    setForceNewMessage,
+    appendHumanMessage,
+    appendOrUpdateToolCallMessage,
+    setCurrentHistoryUid,
+    setMessages,
+    setHistoryList,
+  } = useChatHistory();
   const { addAudioTask } = useAudioTask();
   const bgUrlContext = useBgUrl();
   const { confUid, setConfName, setConfUid, setConfigFiles } = useConfig();
-  const [pendingModelInfo, setPendingModelInfo] = useState<ModelInfo | undefined>(undefined);
+  const { setBrowserViewData } = useBrowser();
   const { setSelfUid, setGroupMembers, setIsOwner } = useGroup();
   const { startMic, stopMic, autoStartMicOnConvEnd } = useVAD();
   const autoStartMicOnConvEndRef = useRef(autoStartMicOnConvEnd);
   const { interrupt } = useInterrupt();
-  const { setBrowserViewData } = useBrowser();
 
-  useEffect(() => {
-    autoStartMicOnConvEndRef.current = autoStartMicOnConvEnd;
-  }, [autoStartMicOnConvEnd]);
-
-  useEffect(() => {
-    console.log('🔄 [WebSocket] pendingModelInfo:', pendingModelInfo);
-    console.log('🔄 [WebSocket] confUid:', confUid);
-    
-    if (pendingModelInfo && confUid) {
-      console.log('✅ [WebSocket] Setting model info:', pendingModelInfo);
-      setModelInfo(pendingModelInfo);
-      setPendingModelInfo(undefined);
-    } else if (pendingModelInfo && !confUid) {
-      console.warn('⚠️ [WebSocket] Pending model info but no confUid yet!');
-    }
-  }, [pendingModelInfo, setModelInfo, confUid]);
-
-  const {
-    setCurrentHistoryUid, setMessages, setHistoryList,
-  } = useChatHistory();
+  const handlersRef = useRef<Record<string, (message: MessageEvent) => void>>({});
 
   const handleControlMessage = useCallback((controlText: string) => {
     switch (controlText) {
       case 'start-mic':
-        console.log('Starting microphone...');
         startMic();
         break;
       case 'stop-mic':
-        console.log('Stopping microphone...');
         stopMic();
         break;
       case 'conversation-chain-start':
@@ -90,10 +76,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         audioTaskQueue.addTask(() => new Promise<void>((resolve) => {
           setAiState((currentState: AiState) => {
             if (currentState === 'thinking-speaking') {
-              // Auto start mic if enabled
-              if (autoStartMicOnConvEndRef.current) {
-                startMic();
-              }
+              if (autoStartMicOnConvEndRef.current) startMic();
               return 'idle';
             }
             return currentState;
@@ -101,218 +84,119 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           resolve();
         }));
         break;
-      default:
-        console.warn('Unknown control command:', controlText);
     }
-  }, [setAiState, clearResponse, setForceNewMessage, startMic, stopMic]);
+  }, [setAiState, clearResponse, startMic, stopMic]);
 
-  const handleWebSocketMessage = useCallback((message: MessageEvent) => {
-    console.log('Received message from server:', message);
-    switch (message.type) {
-      case 'control':
-        if (message.text) {
-          handleControlMessage(message.text);
-        }
-        break;
-      case 'set-model-and-conf':
-        console.log('🎯 [WebSocket] Received set-model-and-conf:', message);
+  // Define message handlers
+  useEffect(() => {
+    handlersRef.current = {
+      control: (msg) => msg.text && handleControlMessage(msg.text),
+      'set-model-and-conf': (msg) => {
         setAiState('loading');
-        if (message.conf_name) {
-          console.log('📝 [WebSocket] Setting conf_name:', message.conf_name);
-          setConfName(message.conf_name);
-        }
-        if (message.conf_uid) {
-          console.log('📝 [WebSocket] Setting conf_uid:', message.conf_uid);
-          setConfUid(message.conf_uid);
-        }
-        if (message.client_uid) {
-          console.log('📝 [WebSocket] Setting client_uid:', message.client_uid);
-          setSelfUid(message.client_uid);
-        }
+        if (msg.conf_name) setConfName(msg.conf_name);
+        if (msg.conf_uid) setConfUid(msg.conf_uid);
+        if (msg.client_uid) setSelfUid(msg.client_uid);
         
-        console.log('🎨 [WebSocket] Model info before processing:', message.model_info);
-        console.log('🌐 [WebSocket] Base URL:', baseUrl);
-        
-        if (message.model_info && !message.model_info.url.startsWith("http")) {
-          const modelUrl = baseUrl + message.model_info.url;
-          console.log('🔗 [WebSocket] Converted URL from', message.model_info.url, 'to', modelUrl);
-          // eslint-disable-next-line no-param-reassign
-          message.model_info.url = modelUrl;
+        if (msg.model_info) {
+          const info = { ...msg.model_info };
+          if (info.url && !info.url.startsWith("http")) {
+            info.url = baseUrl + info.url;
+          }
+          setModelInfo(info);
         }
-        
-        console.log('🎨 [WebSocket] Setting pending model info:', message.model_info);
-        setPendingModelInfo(message.model_info);
-
         setAiState('idle');
-        break;
-      case 'full-text':
-        if (message.text) {
-          setSubtitleText(message.text);
-        }
-        break;
-      case 'config-files':
-        if (message.configs) {
-          setConfigFiles(message.configs);
-        }
-        break;
-      case 'config-switched':
+      },
+      'full-text': (msg) => msg.text && setSubtitleText(msg.text),
+      'config-files': (msg) => msg.configs && setConfigFiles(msg.configs),
+      'config-switched': () => {
         setAiState('idle');
         setSubtitleText(t('notification.characterLoaded'));
-
-        toaster.create({
-          title: t('notification.characterSwitched'),
-          type: 'success',
-          duration: 2000,
-        });
-
-        // setModelInfo(undefined);
-
+        toaster.create({ title: t('notification.characterSwitched'), type: 'success', duration: 2000 });
         wsService.sendMessage({ type: 'fetch-history-list' });
         wsService.sendMessage({ type: 'create-new-history' });
-        break;
-      case 'background-files':
-        if (message.files) {
-          bgUrlContext?.setBackgroundFiles(message.files);
-        }
-        break;
-      case 'audio':
-        if (aiState === 'interrupted' || aiState === 'listening') {
-          console.log('Audio playback intercepted. Sentence:', message.display_text?.text);
-        } else {
-          console.log("actions", message.actions);
+      },
+      'background-files': (msg) => msg.files && bgUrlContext?.setBackgroundFiles(msg.files),
+      audio: (msg) => {
+        if (aiState !== 'interrupted' && aiState !== 'listening') {
           addAudioTask({
-            audioBase64: message.audio || '',
-            volumes: message.volumes || [],
-            sliceLength: message.slice_length || 0,
-            displayText: message.display_text || null,
-            expressions: message.actions?.expressions || null,
-            forwarded: message.forwarded || false,
+            audioBase64: msg.audio || '',
+            volumes: msg.volumes || [],
+            sliceLength: msg.slice_length || 0,
+            displayText: msg.display_text || null,
+            expressions: msg.actions?.expressions || null,
+            forwarded: msg.forwarded || false,
           });
         }
-        break;
-      case 'history-data':
-        if (message.messages) {
-          setMessages(message.messages);
-        }
-        toaster.create({
-          title: t('notification.historyLoaded'),
-          type: 'success',
-          duration: 2000,
-        });
-        break;
-      case 'new-history-created':
+      },
+      'history-data': (msg) => {
+        if (msg.messages) setMessages(msg.messages);
+        toaster.create({ title: t('notification.historyLoaded'), type: 'success', duration: 2000 });
+      },
+      'new-history-created': (msg) => {
         setAiState('idle');
         setSubtitleText(t('notification.newConversation'));
-        // No need to open mic here
-        if (message.history_uid) {
-          setCurrentHistoryUid(message.history_uid);
+        if (msg.history_uid) {
+          setCurrentHistoryUid(msg.history_uid);
           setMessages([]);
-          const newHistory: HistoryInfo = {
-            uid: message.history_uid,
-            latest_message: null,
-            timestamp: new Date().toISOString(),
-          };
-          setHistoryList((prev: HistoryInfo[]) => [newHistory, ...prev]);
-          toaster.create({
-            title: t('notification.newChatHistory'),
-            type: 'success',
-            duration: 2000,
-          });
+          setHistoryList((prev) => [{ uid: msg.history_uid!, latest_message: null, timestamp: new Date().toISOString() }, ...prev]);
+          toaster.create({ title: t('notification.newChatHistory'), type: 'success', duration: 2000 });
         }
-        break;
-      case 'history-deleted':
+      },
+      'history-deleted': (msg) => {
         toaster.create({
-          title: message.success
-            ? t('notification.historyDeleteSuccess')
-            : t('notification.historyDeleteFail'),
-          type: message.success ? 'success' : 'error',
-          duration: 2000,
+          title: msg.success ? t('notification.historyDeleteSuccess') : t('notification.historyDeleteFail'),
+          type: msg.success ? 'success' : 'error',
+          duration: 2000
         });
-        break;
-      case 'history-list':
-        if (message.histories) {
-          setHistoryList(message.histories);
-          if (message.histories.length > 0) {
-            setCurrentHistoryUid(message.histories[0].uid);
-          }
+      },
+      'history-list': (msg) => {
+        if (msg.histories) {
+          setHistoryList(msg.histories);
+          if (msg.histories.length > 0) setCurrentHistoryUid(msg.histories[0].uid);
         }
-        break;
-      case 'user-input-transcription':
-        console.log('user-input-transcription: ', message.text);
-        if (message.text) {
-          appendHumanMessage(message.text);
-        }
-        break;
-      case 'error':
-        toaster.create({
-          title: message.message,
-          type: 'error',
-          duration: 2000,
-        });
-        break;
-      case 'group-update':
-        console.log('Received group-update:', message.members);
-        if (message.members) {
-          setGroupMembers(message.members);
-        }
-        if (message.is_owner !== undefined) {
-          setIsOwner(message.is_owner);
-        }
-        break;
-      case 'group-operation-result':
-        toaster.create({
-          title: message.message,
-          type: message.success ? 'success' : 'error',
-          duration: 2000,
-        });
-        break;
-      case 'backend-synth-complete':
-        setBackendSynthComplete(true);
-        break;
-      case 'conversation-chain-end':
+      },
+      'user-input-transcription': (msg) => msg.text && appendHumanMessage(msg.text),
+      error: (msg) => toaster.create({ title: msg.message, type: 'error', duration: 2000 }),
+      'group-update': (msg) => {
+        if (msg.members) setGroupMembers(msg.members);
+        if (msg.is_owner !== undefined) setIsOwner(msg.is_owner);
+      },
+      'group-operation-result': (msg) => toaster.create({ title: msg.message, type: msg.success ? 'success' : 'error', duration: 2000 }),
+      'backend-synth-complete': () => setBackendSynthComplete(true),
+      'conversation-chain-end': () => {
         if (!audioTaskQueue.hasTask()) {
-          setAiState((currentState: AiState) => {
-            if (currentState === 'thinking-speaking') {
-              return 'idle';
-            }
-            return currentState;
-          });
+          setAiState((curr) => curr === 'thinking-speaking' ? 'idle' : curr);
         }
-        break;
-      case 'force-new-message':
-        setForceNewMessage(true);
-        break;
-      case 'interrupt-signal':
-        // Handle forwarded interrupt
-        interrupt(false); // do not send interrupt signal to server
-        break;
-      case 'tool_call_status':
-        if (message.tool_id && message.tool_name && message.status) {
-          // If there's browser view data included, store it in the browser context
-          if (message.browser_view) {
-            console.log('Browser view data received:', message.browser_view);
-            setBrowserViewData(message.browser_view);
-          }
-
+      },
+      'force-new-message': () => setForceNewMessage(true),
+      'interrupt-signal': () => interrupt(false),
+      tool_call_status: (msg) => {
+        if (msg.tool_id && msg.tool_name && msg.status) {
+          if (msg.browser_view) setBrowserViewData(msg.browser_view);
           appendOrUpdateToolCallMessage({
-            id: message.tool_id,
+            id: msg.tool_id,
             type: 'tool_call_status',
             role: 'ai',
-            tool_id: message.tool_id,
-            tool_name: message.tool_name,
-            name: message.name,
-            status: message.status as ('running' | 'completed' | 'error'),
-            content: message.content || '',
-            timestamp: message.timestamp || new Date().toISOString(),
+            tool_id: msg.tool_id,
+            tool_name: msg.tool_name,
+            name: msg.name,
+            status: msg.status as ('running' | 'completed' | 'error'),
+            content: msg.content || '',
+            timestamp: msg.timestamp || new Date().toISOString(),
           });
-        } else {
-          console.warn('Received incomplete tool_call_status message:', message);
         }
-        break;
-      default:
-        console.warn('Unknown message type:', message.type);
-    }
+      }
+    };
   }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
+
+  const handleWebSocketMessage = useCallback((message: MessageEvent) => {
+    const handler = handlersRef.current[message.type];
+    if (handler) {
+      handler(message);
+    } else if (message.type !== 'frontend-playback-complete') {
+      console.warn('Unknown message type:', message.type);
+    }
+  }, []);
 
   useEffect(() => {
     wsService.connect(wsUrl);

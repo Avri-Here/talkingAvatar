@@ -29,22 +29,6 @@ from .conversations.conversation_handler import (
 )
 
 
-class MessageType(Enum):
-    """Enum for WebSocket message types"""
-
-    GROUP = ["add-client-to-group", "remove-client-from-group"]
-    HISTORY = [
-        "fetch-history-list",
-        "fetch-and-set-history",
-        "create-new-history",
-        "delete-history",
-    ]
-    CONVERSATION = ["mic-audio-end", "text-input", "ai-speak-signal"]
-    CONFIG = ["fetch-configs", "switch-config"]
-    CONTROL = ["interrupt-signal", "audio-play-start"]
-    DATA = ["mic-audio-data"]
-
-
 class WSMessage(TypedDict, total=False):
     """Type definition for WebSocket messages"""
 
@@ -68,7 +52,7 @@ class WebSocketHandler:
         self.chat_group_manager = ChatGroupManager()
         self.current_conversation_tasks: Dict[str, Optional[asyncio.Task]] = {}
         self.default_context_cache = default_context_cache
-        self.received_data_buffers: Dict[str, np.ndarray] = {}
+        self.received_data_buffers: Dict[str, List[float]] = {}
 
         # Message handlers mapping
         self._message_handlers = self._init_message_handlers()
@@ -141,7 +125,7 @@ class WebSocketHandler:
         """Store client data and initialize group status"""
         self.client_connections[client_uid] = websocket
         self.client_contexts[client_uid] = session_service_context
-        self.received_data_buffers[client_uid] = np.array([])
+        self.received_data_buffers[client_uid] = []
 
         self.chat_group_manager.client_group_map[client_uid] = ""
         await self.send_group_update(websocket, client_uid)
@@ -481,10 +465,7 @@ class WebSocketHandler:
         """Handle incoming audio data"""
         audio_data = data.get("audio", [])
         if audio_data:
-            self.received_data_buffers[client_uid] = np.append(
-                self.received_data_buffers[client_uid],
-                np.array(audio_data, dtype=np.float32),
-            )
+            self.received_data_buffers[client_uid].extend(audio_data)
 
     async def _handle_raw_audio_data(
         self, websocket: WebSocket, client_uid: str, data: WSMessage
@@ -502,10 +483,8 @@ class WebSocketHandler:
                     pass
                 elif len(audio_bytes) > 1024:
                     # Detected audio activity (voice)
-                    self.received_data_buffers[client_uid] = np.append(
-                        self.received_data_buffers[client_uid],
-                        np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32),
-                    )
+                    audio_array = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32)
+                    self.received_data_buffers[client_uid].extend(audio_array.tolist())
                     await websocket.send_text(
                         json.dumps({"type": "control", "text": "mic-audio-end"})
                     )
@@ -566,7 +545,7 @@ class WebSocketHandler:
         if len(group_members) > 1:
             display_text = data.get("display_text")
             if display_text:
-                silent_payload = prepare_audio_payload(
+                silent_payload = await prepare_audio_payload(
                     audio_path=None,
                     display_text=display_text,
                     actions=None,
@@ -586,14 +565,9 @@ class WebSocketHandler:
         self, websocket: WebSocket, client_uid: str, data: WSMessage
     ) -> None:
         """Handle request for initialization configuration"""
-        context = self.client_contexts.get(client_uid)
-        if not context:
-            context = self.default_context_cache
+        context = self.client_contexts.get(client_uid) or self.default_context_cache
         
-        logger.info(f"🎯 [Init Config] Client {client_uid} requesting init config")
-        logger.info(f"📝 [Init Config] conf_name: {context.character_config.conf_name}")
-        logger.info(f"📝 [Init Config] conf_uid: {context.character_config.conf_uid}")
-        logger.info(f"🎨 [Init Config] model_info: {context.live2d_model.model_info}")
+        logger.info(f"Client {client_uid} requesting init config: {context.character_config.conf_name}")
 
         response_data = {
             "type": "set-model-and-conf",
@@ -603,8 +577,6 @@ class WebSocketHandler:
             "client_uid": client_uid,
         }
         
-        logger.info(f"✉️ [Init Config] Sending to client: {response_data}")
-
         await websocket.send_text(json.dumps(response_data))
 
     async def _handle_heartbeat(

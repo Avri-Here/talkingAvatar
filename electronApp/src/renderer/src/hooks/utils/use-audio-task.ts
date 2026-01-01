@@ -233,7 +233,7 @@ export const useAudioTask = () => {
     const handleComplete = async () => {
       await audioTaskQueue.waitForCompletion();
       if (isMounted && backendSynthComplete) {
-        stopCurrentAudioAndLipSync();
+        // No need to stop audio here as waitForCompletion ensures it's finished
         sendMessage({ type: "frontend-playback-complete" });
         setBackendSynthComplete(false);
       }

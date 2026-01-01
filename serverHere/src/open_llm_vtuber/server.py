@@ -23,16 +23,15 @@ from .config_manager.utils import Config
 class CORSStaticFiles(StarletteStaticFiles):
     """
     Static files handler that adds CORS headers to all responses.
-    Needed because Starlette StaticFiles might bypass standard middleware.
     """
 
     async def get_response(self, path: str, scope):
         response = await super().get_response(path, scope)
-
-        # Add CORS headers to all responses
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers.update({
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*"
+        })
 
         if path.endswith(".js"):
             response.headers["Content-Type"] = "application/javascript"
@@ -46,11 +45,10 @@ class AvatarStaticFiles(CORSStaticFiles):
     """
 
     async def get_response(self, path: str, scope):
-        allowed_extensions = (".jpg", ".jpeg", ".png", ".gif", ".svg")
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".svg"}
         if not any(path.lower().endswith(ext) for ext in allowed_extensions):
             return Response("Forbidden file type", status_code=403)
-        response = await super().get_response(path, scope)
-        return response
+        return await super().get_response(path, scope)
 
 
 class WebSocketServer:
@@ -132,13 +130,6 @@ class WebSocketServer:
             "/avatars",
             AvatarStaticFiles(directory="avatars"),
             name="avatars",
-        )
-
-        # Mount web tool directory separately from frontend
-        self.app.mount(
-            "/web-tool",
-            CORSStaticFiles(directory="web_tool", html=True),
-            name="web_tool",
         )
 
         # Mount main frontend last (as catch-all)

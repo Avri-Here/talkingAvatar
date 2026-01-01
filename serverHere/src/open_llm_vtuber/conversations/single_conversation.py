@@ -28,23 +28,13 @@ async def process_single_conversation(
     client_uid: str,
     user_input: Union[str, np.ndarray],
     images: Optional[List[Dict[str, Any]]] = None,
-    session_emoji: str = np.random.choice(EMOJI_LIST),
+    session_emoji: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
 ) -> str:
-    """Process a single-user conversation turn
-
-    Args:
-        context: Service context containing all configurations and engines
-        websocket_send: WebSocket send function
-        client_uid: Client unique identifier
-        user_input: Text or audio input from user
-        images: Optional list of image data
-        session_emoji: Emoji identifier for the conversation
-        metadata: Optional metadata for special processing flags
-
-    Returns:
-        str: Complete response text
-    """
+    """Process a single-user conversation turn"""
+    if session_emoji is None:
+        session_emoji = np.random.choice(EMOJI_LIST)
+    
     # Create TTSTaskManager for this conversation
     tts_manager = TTSTaskManager()
     full_response = ""  # Initialize full_response here

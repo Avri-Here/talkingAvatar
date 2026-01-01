@@ -1,5 +1,6 @@
 import os
 import json
+import pysbd
 from uuid import uuid4
 import numpy as np
 from datetime import datetime
@@ -70,6 +71,9 @@ def init_proxy_route(server_url: str) -> APIRouter:
     return router
 
 
+# Global cache for Live2D models info
+_live2d_models_cache = None
+
 def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
     """
     Create and return API routes for handling web tool interactions.
@@ -94,8 +98,12 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         return Response(status_code=302, headers={"Location": "/web-tool/index.html"})
 
     @router.get("/live2d-models/info")
-    async def get_live2d_folder_info():
+    async def get_live2d_folder_info(refresh: bool = False):
         """Get information about available Live2D models"""
+        global _live2d_models_cache
+        if _live2d_models_cache is not None and not refresh:
+            return _live2d_models_cache
+
         live2d_dir = "live2d-models"
         if not os.path.exists(live2d_dir):
             return JSONResponse(
@@ -103,7 +111,7 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
             )
 
         valid_characters = []
-        supported_extensions = [".png", ".jpg", ".jpeg"]
+        supported_extensions = {".png", ".jpg", ".jpeg"}
 
         for entry in os.scandir(live2d_dir):
             if entry.is_dir():
@@ -130,13 +138,15 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
                             "model_path": model3_file,
                         }
                     )
-        return JSONResponse(
+        
+        _live2d_models_cache = JSONResponse(
             {
                 "type": "live2d-models/info",
                 "count": len(valid_characters),
                 "characters": valid_characters,
             }
         )
+        return _live2d_models_cache
 
     @router.post("/asr")
     async def transcribe_audio(file: UploadFile = File(...)):
@@ -205,6 +215,18 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         logger.info("TTS WebSocket connection established")
 
         try:
+            # Determine language from character config if possible
+            lang = "en"
+            if default_context_cache.character_config:
+                # Try to guess language from ASR or TTS config
+                asr_conf = default_context_cache.character_config.asr_config
+                if hasattr(asr_conf, asr_conf.asr_model):
+                    model_conf = getattr(asr_conf, asr_conf.asr_model)
+                    lang = getattr(model_conf, "language", "en")[:2]
+
+            # Initialize sentence segmenter
+            segmenter = pysbd.Segmenter(language=lang, clean=False)
+            
             while True:
                 data = await websocket.receive_json()
                 text = data.get("text")
@@ -213,13 +235,12 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
 
                 logger.info(f"Received text for TTS: {text}")
 
-                # Split text into sentences
-                sentences = [s.strip() for s in text.split(".") if s.strip()]
+                # Split text into sentences using pysbd
+                sentences = segmenter.segment(text)
 
                 try:
                     # Generate and send audio for each sentence
                     for sentence in sentences:
-                        sentence = sentence + "."  # Add back the period
                         file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid4())[:8]}"
                         audio_path = (
                             await default_context_cache.tts_engine.async_generate_audio(

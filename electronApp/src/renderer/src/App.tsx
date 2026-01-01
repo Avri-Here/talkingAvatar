@@ -1,7 +1,7 @@
-/* eslint-disable no-shadow */
 import { Box, ChakraProvider, defaultSystem } from "@chakra-ui/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { AiStateProvider } from "./context/ai-state-context";
+// ... (rest of imports)
 import { Live2DConfigProvider } from "./context/live2d-config-context";
 import { SubtitleProvider } from "./context/subtitle-context";
 import { BgUrlProvider } from "./context/bgurl-context";
@@ -25,25 +25,44 @@ function AppContent(): JSX.Element {
   const live2dContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Set viewport height for mobile browsers and Electron
     const handleResize = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty("--vh", `${vh}px`);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    // Set global body styles once on mount
+    const originalStyles = {
+      overflow: document.body.style.overflow,
+      height: document.body.style.height,
+      position: document.body.style.position,
+      width: document.body.style.width,
+    };
+
+    Object.assign(document.documentElement.style, {
+      overflow: 'hidden',
+      height: '100%',
+      position: 'fixed',
+      width: '100%',
+    });
+
+    Object.assign(document.body.style, {
+      overflow: 'hidden',
+      height: '100%',
+      position: 'fixed',
+      width: '100%',
+    });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      Object.assign(document.documentElement.style, originalStyles);
+      Object.assign(document.body.style, originalStyles);
+    };
   }, []);
 
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
-  document.documentElement.style.height = '100%';
-  document.body.style.height = '100%';
-  document.documentElement.style.position = 'fixed';
-  document.body.style.position = 'fixed';
-  document.documentElement.style.width = '100%';
-  document.body.style.width = '100%';
-
-  const live2dPetStyle = {
+  const live2dPetStyle = useMemo(() => ({
     position: "absolute" as const,
     overflow: "hidden",
     transition: "all 0.3s ease-in-out",
@@ -53,7 +72,7 @@ function AppContent(): JSX.Element {
     width: "100vw",
     height: "100vh",
     zIndex: 15,
-  };
+  }), []);
 
   return (
     <>

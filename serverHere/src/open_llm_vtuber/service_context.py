@@ -248,55 +248,35 @@ class ServiceContext:
 
     async def load_from_config(self, config: Config) -> None:
         """
-        Load the ServiceContext with the config.
-        Reinitialize the instances if the config is different.
-
-        Parameters:
-        - config (Dict): The configuration dictionary.
+        Load the ServiceContext from config.
+        Reinitializes components if their configuration has changed.
         """
-        if not self.config:
-            self.config = config
+        self.config = config
+        self.system_config = config.system_config
+        self.character_config = config.character_config
 
-        if not self.system_config:
-            self.system_config = config.system_config
-
-        if not self.character_config:
-            self.character_config = config.character_config
-
-        # update all sub-configs
-
-        # init live2d from character config
+        # Initialize components from character config
         self.init_live2d(config.character_config.live2d_model_name)
-
-        # init asr from character config
         self.init_asr(config.character_config.asr_config)
-
-        # init tts from character config
         self.init_tts(config.character_config.tts_config)
-
-        # init vad from character config
         self.init_vad(config.character_config.vad_config)
 
-        # Initialize shared ToolAdapter if it doesn't exist yet
+        # Initialize shared ToolAdapter if needed
         if (
             not self.tool_adapter
             and config.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp
         ):
             if not self.mcp_server_registery:
-                logger.info(
-                    "Initializing shared ServerRegistry within load_from_config."
-                )
                 self.mcp_server_registery = ServerRegistry()
-            logger.info("Initializing shared ToolAdapter within load_from_config.")
             self.tool_adapter = ToolAdapter(server_registery=self.mcp_server_registery)
 
-        # Initialize MCP Components before initializing Agent
+        # Initialize MCP components before Agent
         await self._init_mcp_components(
             config.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp,
             config.character_config.agent_config.agent_settings.basic_memory_agent.mcp_enabled_servers,
         )
 
-        # init agent from character config
+        # Initialize agent
         await self.init_agent(
             config.character_config.agent_config,
             config.character_config.persona_prompt,
@@ -305,11 +285,6 @@ class ServiceContext:
         self.init_translate(
             config.character_config.tts_preprocessor_config.translator_config
         )
-
-        # store typed config references
-        self.config = config
-        self.system_config = config.system_config or self.system_config
-        self.character_config = config.character_config
 
     def init_live2d(self, live2d_model_name: str) -> None:
         logger.info(f"Initializing Live2D: {live2d_model_name}")
@@ -436,20 +411,9 @@ class ServiceContext:
     async def construct_system_prompt(self, persona_prompt: str) -> str:
         """
         Append tool prompts to persona prompt.
-
-        Parameters:
-        - persona_prompt (str): The persona prompt.
-
-        Returns:
-        - str: The system prompt with all tool prompts appended.
         """
-        logger.debug(f"constructing persona_prompt: '''{persona_prompt}'''")
-
         for prompt_name, prompt_file in self.system_config.tool_prompts.items():
-            if (
-                prompt_name == "group_conversation_prompt"
-                or prompt_name == "proactive_speak_prompt"
-            ):
+            if prompt_name in {"group_conversation_prompt", "proactive_speak_prompt", "mcp_prompt"}:
                 continue
 
             prompt_content = prompt_loader.load_util(prompt_file)
@@ -459,13 +423,7 @@ class ServiceContext:
                     "[<insert_emomap_keys>]", self.live2d_model.emo_str
                 )
 
-            if prompt_name == "mcp_prompt":
-                continue
-
             persona_prompt += prompt_content
-
-        logger.debug("\n === System Prompt ===")
-        logger.debug(persona_prompt)
 
         return persona_prompt
 

@@ -96,7 +96,7 @@ async def handle_sentence_output(
 
         if translate_engine:
             if len(re.sub(r'[\s.,!?，。！？\'"』」）】\s]+', "", tts_text)):
-                tts_text = translate_engine.translate(tts_text)
+                tts_text = await translate_engine.async_translate(tts_text)
             logger.info(f"🏃 Text after translation: '''{tts_text}'''...")
         else:
             logger.debug("🚫 No translation engine available. Skipping translation.")
@@ -121,7 +121,7 @@ async def handle_audio_output(
     full_response = ""
     async for audio_path, display_text, transcript, actions in output:
         full_response += transcript
-        audio_payload = prepare_audio_payload(
+        audio_payload = await prepare_audio_payload(
             audio_path=audio_path,
             display_text=display_text,
             actions=actions.to_dict() if actions else None,

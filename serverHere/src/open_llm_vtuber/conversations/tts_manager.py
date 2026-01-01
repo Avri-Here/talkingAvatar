@@ -120,7 +120,7 @@ class TTSTaskManager:
         sequence_number: int,
     ) -> None:
         """Queue a silent audio payload"""
-        audio_payload = prepare_audio_payload(
+        audio_payload = await prepare_audio_payload(
             audio_path=None,
             display_text=display_text,
             actions=actions,
@@ -140,7 +140,7 @@ class TTSTaskManager:
         audio_file_path = None
         try:
             audio_file_path = await self._generate_audio(tts_engine, tts_text)
-            payload = prepare_audio_payload(
+            payload = await prepare_audio_payload(
                 audio_path=audio_file_path,
                 display_text=display_text,
                 actions=actions,
@@ -151,7 +151,7 @@ class TTSTaskManager:
         except Exception as e:
             logger.error(f"Error preparing audio payload: {e}")
             # Queue silent payload for error case
-            payload = prepare_audio_payload(
+            payload = await prepare_audio_payload(
                 audio_path=None,
                 display_text=display_text,
                 actions=actions,
