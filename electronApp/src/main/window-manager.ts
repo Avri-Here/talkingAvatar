@@ -103,6 +103,11 @@ export class WindowManager {
         'window-maximized-change',
         this.window.isMaximized(),
       );
+      
+      // Open DevTools in development mode
+      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+        this.window?.webContents.openDevTools({ mode: 'detach' });
+      }
     });
 
     this.window.on('maximize', () => {

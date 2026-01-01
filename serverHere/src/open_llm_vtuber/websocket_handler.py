@@ -589,18 +589,23 @@ class WebSocketHandler:
         context = self.client_contexts.get(client_uid)
         if not context:
             context = self.default_context_cache
+        
+        logger.info(f"🎯 [Init Config] Client {client_uid} requesting init config")
+        logger.info(f"📝 [Init Config] conf_name: {context.character_config.conf_name}")
+        logger.info(f"📝 [Init Config] conf_uid: {context.character_config.conf_uid}")
+        logger.info(f"🎨 [Init Config] model_info: {context.live2d_model.model_info}")
 
-        await websocket.send_text(
-            json.dumps(
-                {
-                    "type": "set-model-and-conf",
-                    "model_info": context.live2d_model.model_info,
-                    "conf_name": context.character_config.conf_name,
-                    "conf_uid": context.character_config.conf_uid,
-                    "client_uid": client_uid,
-                }
-            )
-        )
+        response_data = {
+            "type": "set-model-and-conf",
+            "model_info": context.live2d_model.model_info,
+            "conf_name": context.character_config.conf_name,
+            "conf_uid": context.character_config.conf_uid,
+            "client_uid": client_uid,
+        }
+        
+        logger.info(f"✉️ [Init Config] Sending to client: {response_data}")
+
+        await websocket.send_text(json.dumps(response_data))
 
     async def _handle_heartbeat(
         self, websocket: WebSocket, client_uid: str, data: WSMessage
