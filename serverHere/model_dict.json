@@ -3,7 +3,7 @@
         "name": "johan",
         "description": "Johan character model",
         "url": "/live2d-models/johan/sub_mahuyufather_t03.model3.json",
-        "kScale": 0.35,
+        "kScale": 0.6,
         "initialXshift": 0,
         "initialYshift": 0,
         "idleMotionGroupName": "Idle",
@@ -20,44 +20,13 @@
         },
         "tapMotions": {
             "HitAreaHead": {
-                "m-afather-nod01": 0.3,
+                "m-afather-nod01": 0.5,
                 "s-common-tilthead01": 0.3,
-                "s-common-tilthead02": 0.2,
                 "face_smile_03": 0.2
             },
             "HitAreaBody": {
-                "s-common-pose01": 0.3,
-                "s-common-forward01": 0.3,
-                "s-common-blushed01": 0.2,
-                "face_smile_04": 0.2
-            }
-        }
-    },
-    {
-        "name": "mao_pro",
-        "description": "",
-        "url": "/live2d-models/mao_pro/runtime/mao_pro.model3.json",
-        "kScale": 0.5,
-        "initialXshift": 0,
-        "initialYshift": 0,
-        "kXOffset": 1150,
-        "idleMotionGroupName": "Idle",
-        "emotionMap": {
-            "neutral": 0,
-            "anger": 2,
-            "disgust": 2,
-            "fear": 1,
-            "joy": 3,
-            "smirk": 3,
-            "sadness": 1,
-            "surprise": 3
-        },
-        "tapMotions": {
-            "HitAreaHead": {
-                "": 1
-            },
-            "HitAreaBody": {
-                "": 1
+                "s-common-blushed01": 0.5,
+                "face_smile_04": 0.5
             }
         }
     }

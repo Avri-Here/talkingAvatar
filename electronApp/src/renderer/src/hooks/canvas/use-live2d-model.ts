@@ -110,32 +110,45 @@ export const useLive2DModel = ({
   // ---
 
   useEffect(() => {
+    console.log('🎨 [Live2D Model] modelInfo changed:', modelInfo);
+    
     const currentUrl = modelInfo?.url;
     const sdkScale = (window as any).LAppDefine?.CurrentKScale;
     const modelScale = modelInfo?.kScale !== undefined ? Number(modelInfo.kScale) : undefined;
 
+    console.log('🎨 [Live2D Model] Current URL:', currentUrl);
+    console.log('🎨 [Live2D Model] Previous URL:', prevModelUrlRef.current);
+    console.log('🎨 [Live2D Model] SDK Scale:', sdkScale, 'Model Scale:', modelScale);
+
     const needsUpdate = currentUrl &&
                         (currentUrl !== prevModelUrlRef.current ||
                          (sdkScale !== undefined && modelScale !== undefined && sdkScale !== modelScale));
+
+    console.log('🎨 [Live2D Model] Needs update?', needsUpdate);
 
     if (needsUpdate) {
       prevModelUrlRef.current = currentUrl;
 
       try {
         const { baseUrl, modelDir, modelFileName } = parseModelUrl(currentUrl);
+        console.log('🎨 [Live2D Model] Parsed URL - Base:', baseUrl, 'Dir:', modelDir, 'File:', modelFileName);
 
         if (baseUrl && modelDir) {
+          console.log('🎨 [Live2D Model] Updating model config...');
           updateModelConfig(baseUrl, modelDir, modelFileName, Number(modelInfo.kScale));
 
           setTimeout(() => {
+            console.log('🎨 [Live2D Model] Initializing Live2D...');
             if ((window as any).LAppLive2DManager?.releaseInstance) {
               (window as any).LAppLive2DManager.releaseInstance();
             }
             initializeLive2D();
           }, 500);
+        } else {
+          console.warn('⚠️ [Live2D Model] Missing baseUrl or modelDir!');
         }
       } catch (error) {
-        console.error('Error processing model URL:', error);
+        console.error('❌ [Live2D Model] Error processing model URL:', error);
       }
     }
   }, [modelInfo?.url, modelInfo?.kScale]);

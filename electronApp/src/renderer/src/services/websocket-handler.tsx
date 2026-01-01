@@ -55,9 +55,15 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   }, [autoStartMicOnConvEnd]);
 
   useEffect(() => {
+    console.log('🔄 [WebSocket] pendingModelInfo:', pendingModelInfo);
+    console.log('🔄 [WebSocket] confUid:', confUid);
+    
     if (pendingModelInfo && confUid) {
+      console.log('✅ [WebSocket] Setting model info:', pendingModelInfo);
       setModelInfo(pendingModelInfo);
       setPendingModelInfo(undefined);
+    } else if (pendingModelInfo && !confUid) {
+      console.warn('⚠️ [WebSocket] Pending model info but no confUid yet!');
     }
   }, [pendingModelInfo, setModelInfo, confUid]);
 
@@ -109,25 +115,33 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         }
         break;
       case 'set-model-and-conf':
+        console.log('🎯 [WebSocket] Received set-model-and-conf:', message);
         setAiState('loading');
         if (message.conf_name) {
+          console.log('📝 [WebSocket] Setting conf_name:', message.conf_name);
           setConfName(message.conf_name);
         }
         if (message.conf_uid) {
+          console.log('📝 [WebSocket] Setting conf_uid:', message.conf_uid);
           setConfUid(message.conf_uid);
-          console.log('confUid', message.conf_uid);
         }
         if (message.client_uid) {
+          console.log('📝 [WebSocket] Setting client_uid:', message.client_uid);
           setSelfUid(message.client_uid);
         }
-        setPendingModelInfo(message.model_info);
-        // setModelInfo(message.model_info);
-        // We don't know when the confRef in live2d-config-context will be updated, so we set a delay here for convenience
+        
+        console.log('🎨 [WebSocket] Model info before processing:', message.model_info);
+        console.log('🌐 [WebSocket] Base URL:', baseUrl);
+        
         if (message.model_info && !message.model_info.url.startsWith("http")) {
           const modelUrl = baseUrl + message.model_info.url;
+          console.log('🔗 [WebSocket] Converted URL from', message.model_info.url, 'to', modelUrl);
           // eslint-disable-next-line no-param-reassign
           message.model_info.url = modelUrl;
         }
+        
+        console.log('🎨 [WebSocket] Setting pending model info:', message.model_info);
+        setPendingModelInfo(message.model_info);
 
         setAiState('idle');
         break;
