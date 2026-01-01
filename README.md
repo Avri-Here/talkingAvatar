@@ -53,5 +53,12 @@ The system runs mostly **locally**, is optimized for **low resource usage**, and
 
 ---
 
-## 🏗️ Architecture
+---
+
+## 🚀 Quick Start
+
+### Start Development
+
+```bash
+npm run dev
 
