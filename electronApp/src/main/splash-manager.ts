@@ -63,8 +63,8 @@ export class SplashManager {
     this.splash = new BrowserWindow({
       width: 200,
       height: 190,
-      x: position.x,
-      y: position.y,
+      // x: position.x,
+      // y: position.y,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
