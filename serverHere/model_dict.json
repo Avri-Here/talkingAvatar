@@ -1,5 +1,37 @@
 [
     {
+        "name": "johan",
+        "description": "Johan character model",
+        "url": "/live2d-models/johan/sub_mahuyufather_t03.model3.json",
+        "kScale": 0.35,
+        "initialXshift": 0,
+        "initialYshift": 0,
+        "idleMotionGroupName": "face_normal_01",
+        "defaultEmotion": "face_normal_01",
+        "emotionMap": {
+            "neutral": "face_normal_01",
+            "anger": "face_angry_01",
+            "disgust": "face_coldeyes_01",
+            "fear": "face_confusion_01",
+            "joy": "face_smile_01",
+            "smirk": "face_smile_03",
+            "sadness": "face_sad_01",
+            "surprise": "face_surprise_01"
+        },
+        "tapMotions": {
+            "HitAreaHead": {
+                "m-afather-nod01": 0.5,
+                "s-common-tilthead01": 0.3,
+                "s-common-tilthead02": 0.2
+            },
+            "HitAreaBody": {
+                "s-common-pose01": 0.4,
+                "s-common-forward01": 0.3,
+                "m-normal-nod04": 0.3
+            }
+        }
+    },
+    {
         "name": "mao_pro",
         "description": "",
         "url": "/live2d-models/mao_pro/runtime/mao_pro.model3.json",
