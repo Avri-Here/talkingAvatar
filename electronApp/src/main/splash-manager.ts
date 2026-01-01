@@ -131,7 +131,7 @@ export class SplashManager {
 
   async close(): Promise<void> {
     if (this.splash) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // await new Promise(resolve => setTimeout(resolve, 1500));
       this.splash.close();
       this.splash = null;
     }
