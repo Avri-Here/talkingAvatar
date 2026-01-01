@@ -1,5 +1,6 @@
 """Constructs prompts for servers and tools, formats tool information for OpenAI API."""
 
+import asyncio
 from typing import Dict, Optional, List, Tuple, Any
 from loguru import logger
 
@@ -51,51 +52,58 @@ class ToolAdapter:
         servers_info: Dict[str, Dict[str, str]], 
         formatted_tools: Dict[str, FormattedTool]
     ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, FormattedTool]]:
-        """Helper method to fetch tools using a given client."""
-        for server_name in enabled_servers:
-                if server_name not in self.server_registery.servers:
-                    logger.warning(
-                        f"MC: Enabled server '{server_name}' not found in Server Manager. Skipping."
-                    )
-                    continue
+        """Helper method to fetch tools using a given client in parallel."""
+        
+        async def fetch_single_server(server_name):
+            if server_name not in self.server_registery.servers:
+                logger.warning(
+                    f"MC: Enabled server '{server_name}' not found in Server Manager. Skipping."
+                )
+                return None
 
-                try:
-                    servers_info[server_name] = {}
-                    tools = await client.list_tools(server_name)
-                    logger.debug(
-                        f"MC: Found {len(tools)} tools on server '{server_name}'"
-                    )
-                    for tool in tools:
-                        servers_info[server_name][tool.name] = {}
-                        tool_info = servers_info[server_name][tool.name]
-                        tool_info["description"] = tool.description
-                        tool_info["parameters"] = tool.inputSchema.get("properties", {})
-                        tool_info["required"] = tool.inputSchema.get("required", [])
+            try:
+                tools = await client.list_tools(server_name)
+                logger.debug(
+                    f"MC: Found {len(tools)} tools on server '{server_name}'"
+                )
+                
+                server_tools_info = {}
+                server_formatted_tools = {}
+                
+                for tool in tools:
+                    server_tools_info[tool.name] = {
+                        "description": tool.description,
+                        "parameters": tool.inputSchema.get("properties", {}),
+                        "required": tool.inputSchema.get("required", [])
+                    }
 
-                        # Store the tool info in FormattedTool format
-                        formatted_tools[tool.name] = FormattedTool(
-                            input_schema=tool.inputSchema,
-                            related_server=server_name,
-                            description=tool.description,
-                            # Generic schema will be generated later if needed
-                            generic_schema=None,
-                        )
-                except (ValueError, RuntimeError, ConnectionError) as e:
-                    logger.error(
-                        f"MC: Failed to get info for server '{server_name}': {e}"
+                    # Store the tool info in FormattedTool format
+                    server_formatted_tools[tool.name] = FormattedTool(
+                        input_schema=tool.inputSchema,
+                        related_server=server_name,
+                        description=tool.description,
+                        generic_schema=None,
                     )
-                    if (
-                        server_name not in servers_info
-                    ):  # Ensure entry exists even on error
-                        servers_info[server_name] = {}
-                    continue  # Continue to next server
-                except Exception as e:
-                    logger.error(
-                        f"MC: Unexpected error for server '{server_name}': {e}"
-                    )
-                if server_name not in servers_info:
-                    servers_info[server_name] = {}
-                continue  # Continue to next server
+                return server_name, server_tools_info, server_formatted_tools
+            except (ValueError, RuntimeError, ConnectionError) as e:
+                logger.error(
+                    f"MC: Failed to get info for server '{server_name}': {e}"
+                )
+                return server_name, {}, {}
+            except Exception as e:
+                logger.error(
+                    f"MC: Unexpected error for server '{server_name}': {e}"
+                )
+                return server_name, {}, {}
+
+        # Run all server fetches in parallel
+        results = await asyncio.gather(*[fetch_single_server(s) for s in enabled_servers])
+        
+        for result in results:
+            if result:
+                server_name, server_tools_info, server_formatted_tools = result
+                servers_info[server_name] = server_tools_info
+                formatted_tools.update(server_formatted_tools)
 
         logger.debug(
             f"MC: Finished fetching tool info. Found {len(formatted_tools)} tools across enabled servers."

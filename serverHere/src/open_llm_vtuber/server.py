@@ -8,6 +8,7 @@ It uses FastAPI for the server and Starlette for static file serving.
 
 import os
 import shutil
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -60,12 +61,15 @@ class WebSocketServer:
     """
 
     def __init__(self, config: Config, default_context_cache: ServiceContext = None):
-        self.app = FastAPI(title="Open-LLM-VTuber Server")  # Added title for clarity
         self.config = config
         self.default_context_cache = (
             default_context_cache or ServiceContext()
         )  # Use provided context or initialize a new empty one waiting to be loaded
         # It will be populated during the initialize method call
+
+        self.app = FastAPI(
+            title="Open-LLM-VTuber Server", lifespan=self.lifespan
+        )  # Added lifespan
 
         # Add global CORS middleware
         self.app.add_middleware(
@@ -104,6 +108,36 @@ class WebSocketServer:
             CORSStaticFiles(directory="cache"),
             name="cache",
         )
+
+        # Add Middleware for Security Headers (CSP) to address Electron warnings
+        @self.app.middleware("http")
+        async def add_security_headers(request, call_next):
+            response = await call_next(request)
+            # Standard CSP that allows necessary resources but avoids "unsafe-eval" warning where possible
+            # Note: Live2D SDK might need some relaxed settings, but we try to be as strict as possible
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "  # Live2D often needs unsafe-eval
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: http: https:; "
+                "media-src 'self' data: blob: http: https:; "
+                "connect-src 'self' ws: wss: http: https:;"
+            )
+            return response
+
+    @asynccontextmanager
+    async def lifespan(self, app: FastAPI):
+        """Asynchronous lifespan manager for FastAPI."""
+        # Startup logic
+        from loguru import logger
+
+        logger.info("Server starting up, initializing context...")
+        await self.initialize()
+        yield
+        # Shutdown logic
+        logger.info("Server shutting down, cleaning up context...")
+        if hasattr(self.default_context_cache, "close"):
+            await self.default_context_cache.close()
 
     async def initialize(self):
         """Asynchronously load the service context from config.

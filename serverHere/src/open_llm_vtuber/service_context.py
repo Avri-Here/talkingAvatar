@@ -98,6 +98,14 @@ class ServiceContext:
             f"Initializing MCP components: use_mcpp={use_mcpp}, enabled_servers={enabled_servers}"
         )
 
+        # Properly close existing MCP client before resetting
+        if self.mcp_client:
+            logger.debug("Closing existing MCP client before re-initialization...")
+            try:
+                await self.mcp_client.aclose()
+            except Exception as e:
+                logger.warning(f"Error closing existing MCP client: {e}")
+
         # Reset MCP components first
         self.mcp_server_registery = None
         self.tool_manager = None
@@ -178,17 +186,24 @@ class ServiceContext:
                 "MCP components not initialized (use_mcpp is False or no enabled servers)."
             )
 
-    async def close(self):
-        """Clean up resources, especially the MCPClient.
-        Note: MCPClient is now shared across sessions, so we don't close it here.
-        It will be closed when the server shuts down.
+    async def close(self, close_mcp: bool = True):
+        """Clean up resources.
+        
+        Args:
+            close_mcp (bool): Whether to close the MCP client. 
+                             Defaults to True. Should be False for session contexts
+                             that share the MCP client with the global context.
         """
-        logger.info("Closing ServiceContext resources...")
-        # Don't close shared MCP client - it's managed by the default_context_cache
-        # if self.mcp_client:
-        #     logger.info(f"Closing MCPClient for context instance {id(self)}...")
-        #     await self.mcp_client.aclose()
-        #     self.mcp_client = None
+        logger.info(f"Closing ServiceContext resources (close_mcp={close_mcp})...")
+        
+        if close_mcp and self.mcp_client:
+            logger.info(f"Closing MCPClient for context instance {id(self)}...")
+            try:
+                await self.mcp_client.aclose()
+            except Exception as e:
+                logger.error(f"Error closing MCPClient: {e}")
+            self.mcp_client = None
+
         if self.agent_engine and hasattr(self.agent_engine, "close"):
             await self.agent_engine.close()  # Ensure agent resources are also closed
         logger.info("ServiceContext closed.")

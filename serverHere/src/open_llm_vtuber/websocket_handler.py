@@ -294,10 +294,11 @@ class WebSocketHandler:
                 task.cancel()
             self.current_conversation_tasks.pop(client_uid, None)
 
-        # Call context close to clean up resources (e.g., MCPClient)
+        # Call context close to clean up resources
         context = self.client_contexts.get(client_uid)
         if context:
-            await context.close()
+            # MCP client is shared, so don't close it on individual client disconnect
+            await context.close(close_mcp=False)
 
         logger.info(f"Client {client_uid} disconnected")
         message_handler.cleanup_client(client_uid)

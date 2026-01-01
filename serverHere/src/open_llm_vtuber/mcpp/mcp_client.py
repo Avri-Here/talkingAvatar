@@ -1,5 +1,6 @@
 """MCP Client for Open-LLM-Vtuber."""
 
+import asyncio
 from contextlib import AsyncExitStack
 from typing import Dict, Any, List, Callable
 from loguru import logger
@@ -28,6 +29,7 @@ class MCPClient:
         """Initialize the MCP Client."""
         self.exit_stack: AsyncExitStack = AsyncExitStack()
         self.active_sessions: Dict[str, ClientSession] = {}
+        self._server_locks: Dict[str, asyncio.Lock] = {}  # Locks per server
         self._list_tools_cache: Dict[str, List[Tool]] = {}  # Cache for list_tools
         self._send_text: Callable = send_text
         self._client_uid: str = client_uid
@@ -47,38 +49,47 @@ class MCPClient:
         if server_name in self.active_sessions:
             return self.active_sessions[server_name]
 
-        logger.info(f"MCPC: Starting and connecting to server '{server_name}'...")
-        server = self.server_registery.get_server(server_name)
-        if not server:
-            raise ValueError(
-                f"MCPC: Server '{server_name}' not found in available servers."
+        # Use lock to prevent multiple concurrent startup attempts for the same server
+        if server_name not in self._server_locks:
+            self._server_locks[server_name] = asyncio.Lock()
+            
+        async with self._server_locks[server_name]:
+            # Double check after acquiring lock
+            if server_name in self.active_sessions:
+                return self.active_sessions[server_name]
+
+            logger.info(f"MCPC: Starting and connecting to server '{server_name}'...")
+            server = self.server_registery.get_server(server_name)
+            if not server:
+                raise ValueError(
+                    f"MCPC: Server '{server_name}' not found in available servers."
+                )
+
+            timeout = server.timeout if server.timeout else DEFAULT_TIMEOUT
+
+            server_params = StdioServerParameters(
+                command=server.command, args=server.args, env=server.env, cwd=server.cwd
             )
 
-        timeout = server.timeout if server.timeout else DEFAULT_TIMEOUT
+            try:
+                stdio_transport = await self.exit_stack.enter_async_context(
+                    stdio_client(server_params)
+                )
+                read, write = stdio_transport
 
-        server_params = StdioServerParameters(
-            command=server.command, args=server.args, env=server.env, cwd=server.cwd
-        )
+                session = await self.exit_stack.enter_async_context(
+                    ClientSession(read, write, read_timeout_seconds=timeout)
+                )
+                await session.initialize()
 
-        try:
-            stdio_transport = await self.exit_stack.enter_async_context(
-                stdio_client(server_params)
-            )
-            read, write = stdio_transport
-
-            session = await self.exit_stack.enter_async_context(
-                ClientSession(read, write, read_timeout_seconds=timeout)
-            )
-            await session.initialize()
-
-            self.active_sessions[server_name] = session
-            logger.info(f"MCPC: Successfully connected to server '{server_name}'.")
-            return session
-        except Exception as e:
-            logger.exception(f"MCPC: Failed to connect to server '{server_name}': {e}")
-            raise RuntimeError(
-                f"MCPC: Failed to connect to server '{server_name}'."
-            ) from e
+                self.active_sessions[server_name] = session
+                logger.info(f"MCPC: Successfully connected to server '{server_name}'.")
+                return session
+            except Exception as e:
+                logger.exception(f"MCPC: Failed to connect to server '{server_name}': {e}")
+                raise RuntimeError(
+                    f"MCPC: Failed to connect to server '{server_name}'."
+                ) from e
 
     async def list_tools(self, server_name: str) -> List[Tool]:
         """List all available tools on the specified server."""
@@ -156,21 +167,28 @@ class MCPClient:
 
     async def aclose(self) -> None:
         """Closes all active server connections."""
+        if not hasattr(self, "exit_stack"):
+            return
+
         logger.info(
             f"MCPC: Closing client instance and {len(self.active_sessions)} active connections..."
         )
         try:
+            # Clear locks and cache first
+            self._server_locks.clear()
+            self._list_tools_cache.clear()
+            
+            # Close all active sessions and transports via exit_stack
             await self.exit_stack.aclose()
-        except RuntimeError as e:
-            if "cancel scope" in str(e).lower() or "different task" in str(e).lower():
-                logger.debug(f"MCPC: Ignoring known Windows asyncio cleanup issue: {e}")
-            else:
-                raise
         except Exception as e:
-            logger.warning(f"MCPC: Error during cleanup: {e}")
+            # Handle common Windows cleanup issues
+            error_str = str(e).lower()
+            if "cancel scope" in error_str or "different task" in error_str or "closed pipe" in error_str or "generator" in error_str:
+                logger.debug(f"MCPC: Ignoring expected cleanup error: {e}")
+            else:
+                logger.warning(f"MCPC: Error during cleanup: {e}")
         finally:
             self.active_sessions.clear()
-            self._list_tools_cache.clear()
             self.exit_stack = AsyncExitStack()
             logger.info("MCPC: Client instance closed.")
 
