@@ -117,9 +117,9 @@ class WebSocketServer:
 
         # Mount static files with CORS-enabled handlers
         self.app.mount(
-            "/live2d-models",
-            CORSStaticFiles(directory="live2d-models"),
-            name="live2d-models",
+            "/live2dModels",
+            CORSStaticFiles(directory="live2dModels"),
+            name="live2dModels",
         )
         self.app.mount(
             "/bg",

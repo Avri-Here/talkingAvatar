@@ -97,14 +97,14 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         """Redirect /web_tool to /web_tool/index.html"""
         return Response(status_code=302, headers={"Location": "/web-tool/index.html"})
 
-    @router.get("/live2d-models/info")
+    @router.get("/live2dModels/info")
     async def get_live2d_folder_info(refresh: bool = False):
         """Get information about available Live2D models"""
         global _live2d_models_cache
         if _live2d_models_cache is not None and not refresh:
             return _live2d_models_cache
 
-        live2d_dir = "live2d-models"
+        live2d_dir = "live2dModels"
         if not os.path.exists(live2d_dir):
             return JSONResponse(
                 {"error": "Live2D models directory not found"}, status_code=404
@@ -141,7 +141,7 @@ def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:
         
         _live2d_models_cache = JSONResponse(
             {
-                "type": "live2d-models/info",
+                "type": "live2dModels/info",
                 "count": len(valid_characters),
                 "characters": valid_characters,
             }

@@ -267,6 +267,55 @@
           "FadeOutTime": 0.5,
           "File": "motions/face_surprise_01.motion3.json"
         }
+      ],
+      "Idle": [
+        {
+          "FadeInTime": 1.0,
+          "FadeOutTime": 1.0,
+          "File": "motions/face_smile_02.motion3.json"
+        },
+        {
+          "FadeInTime": 1.0,
+          "FadeOutTime": 1.0,
+          "File": "motions/face_smile_01.motion3.json"
+        },
+        {
+          "FadeInTime": 1.0,
+          "FadeOutTime": 1.0,
+          "File": "motions/s-common-tilthead01.motion3.json"
+        },
+        {
+          "FadeInTime": 1.0,
+          "FadeOutTime": 1.0,
+          "File": "motions/s-common-tilthead02.motion3.json"
+        },
+        {
+          "FadeInTime": 1.0,
+          "FadeOutTime": 1.0,
+          "File": "motions/m-normal-nod04.motion3.json"
+        }
+      ],
+      "Speaking": [
+        {
+          "FadeInTime": 0.5,
+          "FadeOutTime": 0.5,
+          "File": "motions/m-normal-nod04.motion3.json"
+        },
+        {
+          "FadeInTime": 0.5,
+          "FadeOutTime": 0.5,
+          "File": "motions/m-afather-nod01.motion3.json"
+        },
+        {
+          "FadeInTime": 0.5,
+          "FadeOutTime": 0.5,
+          "File": "motions/s-common-nod01.motion3.json"
+        },
+        {
+          "FadeInTime": 0.5,
+          "FadeOutTime": 0.5,
+          "File": "motions/s-common-tilthead01.motion3.json"
+        }
       ]
     },
     "Physics": "sub_mahuyufather_t03.physics3.json",

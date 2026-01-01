@@ -102,15 +102,15 @@ export class MenuManager {
           event.sender.send('interrupt');
         },
       },
-      // {
-      //   label: 'Switch Character',
-      //   submenu: this.configFiles.map((config) => ({
-      //     label: config.name,
-      //     click: () => {
-      //       event.sender.send('switch-character', config.filename);
-      //     },
-      //   })),
-      // },
+      {
+        label: 'Switch Model',
+        submenu: this.configFiles.map((config) => ({
+          label: config.name,
+          click: () => {
+            event.sender.send('switch-character', config.filename);
+          },
+        })),
+      },
       {
         label: 'Toggle Microphone',
         click: () => {

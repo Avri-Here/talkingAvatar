@@ -2,7 +2,7 @@
     {
         "name": "johan",
         "description": "Johan character model",
-        "url": "/live2d-models/johan/sub_mahuyufather_t03.model3.json",
+        "url": "/live2dModels/johan/sub_mahuyufather_t03.model3.json",
         "kScale": 1.5,
         "initialXshift": 0,
         "initialYshift": 0,
@@ -27,6 +27,60 @@
             "HitAreaBody": {
                 "s-common-blushed01": 0.5,
                 "face_smile_04": 0.5
+            }
+        }
+    },
+    {
+        "name": "chitose",
+        "description": "Chitose character model",
+        "url": "/live2dModels/chitose/chitose_t02.model3.json",
+        "kScale": 1.0,
+        "initialXshift": 0,
+        "initialYshift": 0,
+        "idleMotionGroupName": "Idle",
+        "defaultEmotion": "Normal.exp3.json",
+        "emotionMap": {
+            "neutral": "Normal.exp3.json",
+            "anger": "Angry.exp3.json",
+            "disgust": "Sad.exp3.json",
+            "fear": "Surprised.exp3.json",
+            "joy": "Smile.exp3.json",
+            "smirk": "Blushing.exp3.json",
+            "sadness": "Sad.exp3.json",
+            "surprise": "Surprised.exp3.json"
+        },
+        "tapMotions": {
+            "HitAreaHead": {
+                "chitose_handwave": 0.6,
+                "chitose_kime01": 0.4
+            },
+            "HitAreaBody": {
+                "chitose_kime02": 0.7,
+                "chitose_handwave": 0.3
+            }
+        }
+    },
+    {
+        "name": "wanko",
+        "description": "Wanko character model",
+        "url": "/live2dModels/wanko/wanko_touch_t02.model3.json",
+        "kScale": 1.0,
+        "initialXshift": 0,
+        "initialYshift": 0,
+        "idleMotionGroupName": "Idle",
+        "defaultEmotion": null,
+        "emotionMap": {},
+        "tapMotions": {
+            "HitAreaHead": {
+                "touch_01": 0.4,
+                "touch_02": 0.3,
+                "shake_01": 0.3
+            },
+            "HitAreaBody": {
+                "touch_03": 0.3,
+                "touch_04": 0.3,
+                "touch_05": 0.2,
+                "touch_06": 0.2
             }
         }
     }
