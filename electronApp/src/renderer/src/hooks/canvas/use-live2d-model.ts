@@ -20,6 +20,30 @@ interface Position {
 const TAP_DURATION_THRESHOLD_MS = 200; // Max duration for a tap
 const DRAG_DISTANCE_THRESHOLD_PX = 5; // Min distance to be considered a drag
 
+// LocalStorage key for saving model position
+const MODEL_POSITION_STORAGE_KEY = 'live2d-model-position';
+
+// Helper functions for localStorage
+const savePositionToStorage = (position: { x: number; y: number }) => {
+  try {
+    localStorage.setItem(MODEL_POSITION_STORAGE_KEY, JSON.stringify(position));
+  } catch (error) {
+    console.error('Failed to save position to localStorage:', error);
+  }
+};
+
+const loadPositionFromStorage = (): { x: number; y: number } | null => {
+  try {
+    const saved = localStorage.getItem(MODEL_POSITION_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Failed to load position from localStorage:', error);
+  }
+  return null;
+};
+
 function parseModelUrl(url: string): { baseUrl: string; modelDir: string; modelFileName: string } {
   try {
     const urlObj = new URL(url);
@@ -106,15 +130,13 @@ export const useLive2DModel = ({
   // ---
 
   useEffect(() => {
+    
     console.log('🎨 [Live2D Model] modelInfo changed:', modelInfo);
     
     const currentUrl = modelInfo?.url;
     const sdkScale = (window as any).LAppDefine?.CurrentKScale;
     const modelScale = modelInfo?.kScale !== undefined ? Number(modelInfo.kScale) : undefined;
 
-    console.log('🎨 [Live2D Model] Current URL:', currentUrl);
-    console.log('🎨 [Live2D Model] Previous URL:', prevModelUrlRef.current);
-    console.log('🎨 [Live2D Model] SDK Scale:', sdkScale, 'Model Scale:', modelScale);
 
     const needsUpdate = currentUrl &&
                         (currentUrl !== prevModelUrlRef.current ||
@@ -148,10 +170,25 @@ export const useLive2DModel = ({
             console.log('🎨 [Live2D Model] Initializing Live2D...');
             initializeLive2D();
             
-            // Give it a moment to finish internal setup before hiding loader
+            // Restore position from localStorage immediately after model loads
             setTimeout(() => {
-              setIsLoading(false);
-            }, 300);
+              
+              const savedPosition = loadPositionFromStorage();
+              if (savedPosition) {
+                console.log('🔄 [Live2D Model] Restoring saved position from storage:', savedPosition);
+                setModelPosition(savedPosition.x, savedPosition.y);
+                modelPositionRef.current = { ...savedPosition };
+                setPosition(savedPosition);
+                
+                // Wait a bit more to ensure position is applied before showing model
+                setTimeout(() => {
+                  setIsLoading(false);
+                }, 150);
+              } else {
+                console.log('🎨 [Live2D Model] No saved position, using default');
+                setIsLoading(false);
+              }
+            }, 100);
           }, 500);
         } else {
           console.warn('⚠️ [Live2D Model] Missing baseUrl or modelDir!');
@@ -198,13 +235,24 @@ export const useLive2DModel = ({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentPos = getModelPosition();
-      modelPositionRef.current = currentPos;
-      setPosition(currentPos);
-    }, 500);
+      // Load position from localStorage or use default
+      const savedPosition = loadPositionFromStorage();
+      
+      if (savedPosition) {
+        console.log('📍 [Live2D Model] Loading saved position from storage:', savedPosition);
+        setModelPosition(savedPosition.x, savedPosition.y);
+        modelPositionRef.current = savedPosition;
+        setPosition(savedPosition);
+      } else {
+        console.log('📍 [Live2D Model] Using default position');
+        const currentPos = getModelPosition();
+        modelPositionRef.current = currentPos;
+        setPosition(currentPos);
+      }
+    }, 800);
 
     return () => clearTimeout(timer);
-  }, [modelInfo?.url, getModelPosition]);
+  }, [modelInfo?.url, getModelPosition, setModelPosition]);
 
   const getCanvasScale = useCallback(() => {
     const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -330,8 +378,9 @@ export const useLive2DModel = ({
         model._modelMatrix.setMatrix(newMatrix);
       }
 
-      modelPositionRef.current = { x: newX, y: newY };
-      setPosition({ x: newX, y: newY }); // Update React state if needed for UI feedback
+      const newPosition = { x: newX, y: newY };
+      modelPositionRef.current = newPosition;
+      setPosition(newPosition);
     }
     // --- End Continue Drag Logic ---
 
@@ -373,6 +422,9 @@ export const useLive2DModel = ({
           modelPositionRef.current = finalPos;
           modelStartPos.current = finalPos; // Update base position for next potential drag
           setPosition(finalPos);
+          // Save to localStorage for persistence across model switches
+          savePositionToStorage(finalPos);
+          console.log('💾 [Live2D Model] Saved position to storage:', finalPos);
         }
       }
     } else if (isPotentialTapRef.current && adapter && model && view && canvasRef.current) {

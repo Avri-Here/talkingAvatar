@@ -4,8 +4,6 @@
         "description": "Johan character model",
         "url": "/live2dModels/johan/sub_mahuyufather_t03.model3.json",
         "kScale": 1.3,
-        "initialXshift": 0,
-        "initialYshift": 0,
         "idleMotionGroupName": "Idle",
         "defaultEmotion": "face_smile_02",
         "emotionMap": {
@@ -35,8 +33,6 @@
         "description": "Chitose character model",
         "url": "/live2dModels/chitose/chitose_t02.model3.json",
         "kScale": 1.3,
-        "initialXshift": 0,
-        "initialYshift": 0,
         "idleMotionGroupName": "Idle",
         "defaultEmotion": "Normal.exp3.json",
         "emotionMap": {
@@ -65,8 +61,6 @@
         "description": "Wanko character model",
         "url": "/live2dModels/wanko/wanko_touch_t02.model3.json",
         "kScale": 1.9,
-        "initialXshift": 0,
-        "initialYshift": 0,
         "idleMotionGroupName": "Idle",
         "defaultEmotion": null,
         "emotionMap": {},

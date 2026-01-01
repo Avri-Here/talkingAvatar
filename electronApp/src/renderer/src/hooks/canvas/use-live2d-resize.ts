@@ -203,7 +203,7 @@ export const useLive2DResize = ({
     } catch (error) {
       isResizingRef.current = false;
     }
-  }, [modelInfo?.kScale, modelInfo?.initialXshift, modelInfo?.initialYshift, beforeResize, canvasRef]);
+  }, [modelInfo?.kScale, beforeResize, canvasRef]);
 
 
   
@@ -313,31 +313,4 @@ export const setModelScale = (
 ) => {
   if (!model || kScale === undefined) return;
   console.warn("setModelScale is potentially deprecated; scaling is primarily handled by view matrix now.");
-};
-
-/**
- * Helper function to center model in container with optional offset
- * This is now primarily handled within handleResize
- */
-export const resetModelPosition = (
-  model: any,
-  width: number, // Logical width (CSS pixels)
-  height: number, // Logical height (CSS pixels)
-  initialXshift: number | undefined, // Shift in logical pixels
-  initialYshift: number | undefined, // Shift in logical pixels
-) => {
-  if (!model || typeof model.setPosition !== 'function') return;
-
-  const dpr = window.devicePixelRatio || 1;
-  const canvasWidth = width * dpr; // Calculate canvas pixel dimensions
-  const canvasHeight = height * dpr;
-
-  const initXshiftPixels = Number(initialXshift || 0) * dpr; // Convert shift to canvas pixels
-  const initYshiftPixels = Number(initialYshift || 0) * dpr;
-
-  const centerX = canvasWidth / 2 + initXshiftPixels;
-  const centerY = canvasHeight / 2 + initYshiftPixels;
-
-  // @ts-ignore
-  model.setPosition(centerX, centerY);
 };

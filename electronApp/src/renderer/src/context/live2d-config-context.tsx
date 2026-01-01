@@ -45,12 +45,6 @@ export interface ModelInfo {
   /** Scale factor */
   kScale: number;
 
-  /** Initial X position shift */
-  initialXshift: number;
-
-  /** Initial Y position shift */
-  initialYshift: number;
-
   /** Idle motion group name */
   idleMotionGroupName?: string;
 
