@@ -8,7 +8,7 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
 
 ### 🎬 Live Demo 
 <p align="center">
-  <img src="docImg/vid.gif" width="740" height="400"/>
+  <img src="docImg/vid.gif" width="740" height="400" style="object-fit: cover; "/>
 </p>
 
 ---
@@ -22,9 +22,9 @@ An AI-powered **VTuber / Talking Avatar** application with real-time voice inter
     <th>🎡 XP</th>
   </tr>
   <tr>
-    <td><img src="docImg/home.png" width="240" height="240" style="object-fit: cover;"/></td>
-    <td><img src="docImg/disk.png" width="240" height="220" style="object-fit: cover"; /></td>
-    <td><img src="docImg/xp.png" width="240" height="270" style="object-fit: cover"; /></td>
+    <td><img src="docImg/home.png" width="240" height="220" style="object-fit: cover;"/></td>
+    <td><img src="docImg/disk.png" width="240" height="220" style="object-fit: cover;"/></td>
+    <td><img src="docImg/xp.png" width="240" height="310" style="object-fit: cover;"/></td>
   </tr>
 </table>
 
