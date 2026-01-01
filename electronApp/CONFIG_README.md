@@ -4,6 +4,8 @@
 
 This application is configured entirely through the `config.json` file located in the `electronApp` directory. All settings that were previously available through the UI have been moved to this configuration file.
 
+**Note: The application now runs exclusively in Pet Mode** - a transparent, desktop pet-style window that can be placed anywhere on your screen.
+
 ## Configuration File Location
 
 - **Development**: `electronApp/config.json`
@@ -67,8 +69,8 @@ This application is configured entirely through the `config.json` file located i
 
 ### Background Settings
 
-- **backgroundUrl**: URL of the background image
-- **useCameraBackground**: Use camera as background (`true`/`false`)
+- **backgroundUrl**: URL of the background image (not used in Pet Mode)
+- **useCameraBackground**: Use camera as background (not used in Pet Mode)
 
 ### Character Settings
 
@@ -95,6 +97,17 @@ This application is configured entirely through the `config.json` file located i
 - **scrollToResize**: Enable scroll to resize model (`true`/`false`)
 - **pointerInteractive**: Enable pointer interaction with model (`true`/`false`)
 
+## Pet Mode Features
+
+The application now runs exclusively in Pet Mode with the following features:
+
+- **Transparent Window**: The character appears as a desktop pet without a traditional window frame
+- **Always on Top**: The character stays on top of other windows
+- **Mouse Passthrough**: You can toggle whether mouse clicks pass through the character
+- **Draggable**: Click and drag the character to move it around your screen
+- **Multi-Monitor Support**: The character can be moved across multiple monitors
+- **Input Subtitle**: A floating input box for text interaction
+
 ## How to Modify Configuration
 
 1. Open `electronApp/config.json` in a text editor
@@ -108,4 +121,4 @@ This application is configured entirely through the `config.json` file located i
 - All settings are loaded at application startup
 - Changes require application restart
 - Invalid configuration values will fall back to defaults
-
+- The application no longer supports Window Mode - only Pet Mode is available

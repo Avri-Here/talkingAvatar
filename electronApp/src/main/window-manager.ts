@@ -18,9 +18,8 @@ export class WindowManager {
 
   private hoveringComponents: Set<string> = new Set();
 
-  private currentMode: 'window' | 'pet' = 'window';
+  private currentMode: 'window' | 'pet' = 'pet';
 
-  // Track if mouse events are forcibly ignored
   private forceIgnoreMouse = false;
 
   constructor() {
@@ -86,6 +85,10 @@ export class WindowManager {
 
     this.window.on('leave-full-screen', () => {
       this.window?.webContents.send('window-fullscreen-change', false);
+    });
+
+    this.window.webContents.once('did-finish-load', () => {
+      this.setWindowMode('pet');
     });
 
     return this.window;

@@ -13,7 +13,7 @@ export interface ConfigFile {
 export class MenuManager {
   private tray: Tray | null = null;
 
-  private currentMode: 'window' | 'pet' = 'window';
+  private currentMode: 'window' | 'pet' = 'pet';
 
   private configFiles: ConfigFile[] = [];
 
@@ -32,50 +32,20 @@ export class MenuManager {
     this.updateTrayMenu();
   }
 
-  private getModeMenuItems(): MenuItemConstructorOptions[] {
-    // console.log('Getting mode menu items, current mode:', this.currentMode)
-    return [
-      {
-        label: 'Window Mode',
-        type: 'radio' as const,
-        checked: this.currentMode === 'window',
-        click: () => {
-          this.setMode('window');
-        },
-      },
-      {
-        label: 'Pet Mode',
-        type: 'radio' as const,
-        checked: this.currentMode === 'pet',
-        click: () => {
-          this.setMode('pet');
-        },
-      },
-    ];
-  }
-
   private updateTrayMenu(): void {
     if (!this.tray) return;
-    // console.log('Updating tray menu, current mode:', this.currentMode)
 
     const contextMenu = Menu.buildFromTemplate([
-      ...this.getModeMenuItems(),
+      {
+        label: 'Toggle Mouse Passthrough',
+        click: () => {
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((window) => {
+            window.webContents.send('toggle-force-ignore-mouse');
+          });
+        },
+      },
       { type: 'separator' as const },
-      // Only show toggle mouse ignore in pet mode
-      ...(this.currentMode === 'pet'
-        ? [
-          {
-            label: 'Toggle Mouse Passthrough',
-            click: () => {
-              const windows = BrowserWindow.getAllWindows();
-              windows.forEach((window) => {
-                window.webContents.send('toggle-force-ignore-mouse');
-              });
-            },
-          },
-          { type: 'separator' as const },
-        ]
-        : []),
       {
         label: 'Show',
         click: () => {
@@ -121,40 +91,27 @@ export class MenuManager {
         },
       },
       { type: 'separator' as const },
-      // Only show in pet mode
-      ...(this.currentMode === 'pet'
-        ? [
-          {
-            label: 'Toggle Mouse Passthrough',
-            click: () => {
-              event.sender.send('toggle-force-ignore-mouse');
-            },
-          },
-        ]
-        : []),
+      {
+        label: 'Toggle Mouse Passthrough',
+        click: () => {
+          event.sender.send('toggle-force-ignore-mouse');
+        },
+      },
       {
         label: 'Toggle Scrolling to Resize',
         click: () => {
           event.sender.send('toggle-scroll-to-resize');
         },
       },
-      // Only show this item in pet mode
-      ...(this.currentMode === 'pet'
-        ? [
-          {
-            label: 'Toggle InputBox and Subtitle',
-            click: () => {
-              event.sender.send('toggle-input-subtitle');
-            },
-          },
-        ]
-        : []),
-      { type: 'separator' as const },
-      ...this.getModeMenuItems(),
+      {
+        label: 'Toggle InputBox and Subtitle',
+        click: () => {
+          event.sender.send('toggle-input-subtitle');
+        },
+      },
       { type: 'separator' as const },
       {
         label: 'Switch Character',
-        visible: this.currentMode === 'pet',
         submenu: this.configFiles.map((config) => ({
           label: config.name,
           click: () => {

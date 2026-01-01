@@ -12,7 +12,7 @@ interface ModeContextType {
 const ModeContext = createContext<ModeContextType | undefined>(undefined);
 
 export const ModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<ModeType>('window');
+  const [mode, setModeState] = useState<ModeType>('pet');
   const isElectron = window.api !== undefined;
 
   const setMode = (newMode: ModeType) => {
