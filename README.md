@@ -107,9 +107,10 @@ talkingAvatar/
 
 ## Performance Optimizations
 
-1. **MCP Connection Reuse** - One persistent connection for all sessions
-2. **No Frontend Serving** - Server only handles WebSocket + cache
-3. **Shared Tool Manager** - Tools loaded once at startup
+1.  **MCP Parallel Loading** - Connects to all MCP servers simultaneously at startup for faster boot.
+2.  **FastAPI Lifespan Management** - Uses standard lifespan events for stable initialization and cleanup on Windows.
+3.  **Single Client Architecture** - Optimized for one Electron instance with shared tool management.
+4.  **Security Headers** - Built-in Content Security Policy (CSP) to satisfy Electron security requirements.
 
 ## Requirements
 

@@ -9,7 +9,6 @@ import { audioTaskQueue } from '@/utils/task-queue';
 import { useAudioTask } from '@/components/canvas/live2d';
 import { useConfig } from '@/context/character-config-context';
 import { useChatHistory } from '@/context/chat-history-context';
-import { toaster } from '@/components/ui/toaster';
 import { useVAD } from '@/context/vad-context';
 import { AiState, useAiState } from "@/context/ai-state-context";
 import { useGroup } from '@/context/group-context';
@@ -89,7 +88,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         if (msg.conf_name) setConfName(msg.conf_name);
         if (msg.conf_uid) setConfUid(msg.conf_uid);
         if (msg.client_uid) setSelfUid(msg.client_uid);
-        
+
         if (msg.model_info) {
           const info = { ...msg.model_info };
           if (info.url && !info.url.startsWith("http")) {
@@ -101,8 +100,15 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       },
       'config-files': (msg) => msg.configs && setConfigFiles(msg.configs),
       'config-switched': () => {
-        setAiState('idle');
-        toaster.create({ title: t('notification.characterSwitched'), type: 'success', duration: 2000 });
+        // setAiState('loading'); // Removing this to avoid confusion with internal isLoading
+        setMessages([]); // Clear UI messages immediately
+        console.log('Character switched successfully');
+
+        // Trigger splash screen for a fresh start feeling
+        // if (window.api && (window.api as any).showSplash) {
+        // (window.api as any).showSplash();
+        // }
+
         wsService.sendMessage({ type: 'fetch-history-list' });
         wsService.sendMessage({ type: 'create-new-history' });
       },
@@ -120,7 +126,7 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       },
       'history-data': (msg) => {
         if (msg.messages) setMessages(msg.messages);
-        toaster.create({ title: t('notification.historyLoaded'), type: 'success', duration: 2000 });
+        console.log('History loaded successfully');
       },
       'new-history-created': (msg) => {
         setAiState('idle');
@@ -128,15 +134,11 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           setCurrentHistoryUid(msg.history_uid);
           setMessages([]);
           setHistoryList((prev) => [{ uid: msg.history_uid!, latest_message: null, timestamp: new Date().toISOString() }, ...prev]);
-          toaster.create({ title: t('notification.newChatHistory'), type: 'success', duration: 2000 });
+          console.log('New chat history created');
         }
       },
       'history-deleted': (msg) => {
-        toaster.create({
-          title: msg.success ? t('notification.historyDeleteSuccess') : t('notification.historyDeleteFail'),
-          type: msg.success ? 'success' : 'error',
-          duration: 2000
-        });
+        console.log(msg.success ? 'History deleted successfully' : 'Failed to delete history');
       },
       'history-list': (msg) => {
         if (msg.histories) {
@@ -145,12 +147,18 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
         }
       },
       'user-input-transcription': (msg) => msg.text && appendHumanMessage(msg.text),
-      error: (msg) => toaster.create({ title: msg.message, type: 'error', duration: 2000 }),
+      error: (msg) => console.error('WebSocket Error:', msg.message),
       'group-update': (msg) => {
         if (msg.members) setGroupMembers(msg.members);
         if (msg.is_owner !== undefined) setIsOwner(msg.is_owner);
       },
-      'group-operation-result': (msg) => toaster.create({ title: msg.message, type: msg.success ? 'success' : 'error', duration: 2000 }),
+      'group-operation-result': (msg) => {
+        if (msg.success) {
+          console.log('Group operation success:', msg.message);
+        } else {
+          console.error('Group operation failed:', msg.message);
+        }
+      },
       'backend-synth-complete': () => setBackendSynthComplete(true),
       'conversation-chain-end': () => {
         if (!audioTaskQueue.hasTask()) {
@@ -175,8 +183,8 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           });
         }
       },
-      'full-text': () => {},
-      'background-files': () => {}
+      'full-text': () => { },
+      'background-files': () => { }
     };
   }, [aiState, addAudioTask, appendHumanMessage, baseUrl, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
 

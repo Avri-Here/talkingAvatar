@@ -90,6 +90,7 @@ export const useLive2DModel = ({
   const { mode } = useMode();
   const isPet = mode === 'pet';
   const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const dragStartPos = useRef<Position>({ x: 0, y: 0 }); // Screen coordinates at drag start
   const modelStartPos = useRef<Position>({ x: 0, y: 0 }); // Model coordinates at drag start
@@ -121,8 +122,13 @@ export const useLive2DModel = ({
 
     console.log('🎨 [Live2D Model] Needs update?', needsUpdate);
 
+    if (currentUrl && currentUrl !== prevModelUrlRef.current) {
+      setIsLoading(true); // Always set loading if URL changed
+    }
+
     if (needsUpdate) {
       prevModelUrlRef.current = currentUrl;
+      // setIsLoading(true); // Moved above
 
       try {
         const { baseUrl, modelDir, modelFileName } = parseModelUrl(currentUrl);
@@ -130,20 +136,30 @@ export const useLive2DModel = ({
 
         if (baseUrl && modelDir) {
           console.log('🎨 [Live2D Model] Updating model config...');
+          
+          // Release current instance immediately to hide old model
+          if ((window as any).LAppLive2DManager?.releaseInstance) {
+            (window as any).LAppLive2DManager.releaseInstance();
+          }
+
           updateModelConfig(baseUrl, modelDir, modelFileName, Number(modelInfo.kScale));
 
           setTimeout(() => {
             console.log('🎨 [Live2D Model] Initializing Live2D...');
-            if ((window as any).LAppLive2DManager?.releaseInstance) {
-              (window as any).LAppLive2DManager.releaseInstance();
-            }
             initializeLive2D();
+            
+            // Give it a moment to finish internal setup before hiding loader
+            setTimeout(() => {
+              setIsLoading(false);
+            }, 300);
           }, 500);
         } else {
           console.warn('⚠️ [Live2D Model] Missing baseUrl or modelDir!');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('❌ [Live2D Model] Error processing model URL:', error);
+        setIsLoading(false);
       }
     }
   }, [modelInfo?.url, modelInfo?.kScale]);
@@ -540,6 +556,7 @@ Live2DDebug.playRandomMotion("")  // Play random motion from default group
   return {
     position,
     isDragging,
+    isLoading, // Return isLoading
     handlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,

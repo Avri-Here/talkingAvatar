@@ -24,7 +24,7 @@ export const Live2D = memo(
     });
 
     // Pass canvasRef to useLive2DModel
-    const { isDragging, handlers } = useLive2DModel({
+    const { isDragging, isLoading, handlers } = useLive2DModel({
       modelInfo,
       canvasRef,
     });
@@ -102,9 +102,14 @@ export const Live2D = memo(
             height: "100%",
             pointerEvents: forceIgnoreMouse ? "none" : "auto",
             display: "block",
+            opacity: isLoading ? 0.3 : 1, // Dim instead of hide
+            transition: "opacity 0.3s ease",
             cursor: isDragging ? "grabbing" : "default",
           }}
         />
+        {isLoading && (
+          <></>
+        )}
       </div>
     );
   },
@@ -113,3 +118,6 @@ export const Live2D = memo(
 Live2D.displayName = "Live2D";
 
 export { useInterrupt, useAudioTask };
+
+
+// ✨🕵️✨

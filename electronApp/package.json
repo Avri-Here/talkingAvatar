@@ -11,7 +11,8 @@
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win"
+    "build:win": "npm run build && electron-builder --win",
+    "killAll": "taskkill /F /IM electron.exe & taskkill /F /IM node.exe & taskkill /F /IM python.exe"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.2.3",
@@ -23,7 +24,6 @@
     "@ricky0123/vad-web": "^0.0.24",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "electron-updater": "^6.1.7",
     "framer-motion": "^11.14.4",
     "i18next": "^25.0.1",
     "i18next-browser-languagedetector": "^8.0.5",

@@ -8,7 +8,6 @@ export const useInterrupt = () => {
   const { aiState, setAiState } = useAiState();
   const { sendMessage } = useWebSocket();
   const { fullResponse, clearResponse } = useChatHistory();
-  // const { currentModel } = useLive2DModel();
   const { stopCurrentAudioAndLipSync } = useAudioTask();
 
   const interrupt = (sendSignal = true) => {

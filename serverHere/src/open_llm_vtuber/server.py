@@ -109,6 +109,29 @@ class WebSocketServer:
             name="cache",
         )
 
+        # Mount live2dModels directory
+        if os.path.exists("live2dModels"):
+            self.app.mount(
+                "/live2dModels",
+                CORSStaticFiles(directory="live2dModels"),
+                name="live2dModels",
+            )
+
+        # Mount backgrounds directory
+        if os.path.exists("backgrounds"):
+            self.app.mount(
+                "/backgrounds",
+                CORSStaticFiles(directory="backgrounds"),
+                name="backgrounds",
+            )
+
+        # Mount Resources to root to support /Resources/cache/... and /Resources/live2dModels/...
+        self.app.mount(
+            "/Resources",
+            CORSStaticFiles(directory="."),
+            name="Resources",
+        )
+
         # Add Middleware for Security Headers (CSP) to address Electron warnings
         @self.app.middleware("http")
         async def add_security_headers(request, call_next):

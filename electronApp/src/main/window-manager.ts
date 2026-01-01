@@ -42,11 +42,12 @@ export class WindowManager {
       show: false,
       transparent: true,
       backgroundColor: '#00000000',
-      autoHideMenuBar: true,
+      alwaysOnTop: true,
+      skipTaskbar: true,
       frame: false,
-      icon: process.platform === 'win32'
-        ? join(__dirname, '../../resources/icon.ico')
-        : join(__dirname, '../../resources/icon.png'),
+      // icon: process.platform === 'win32'
+      //   ? join(__dirname, '../../resources/icon.ico')
+      //   : join(__dirname, '../../resources/icon.png'),
       ...(isMac ? { titleBarStyle: 'hiddenInset' } : {}),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),

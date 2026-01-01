@@ -56,6 +56,9 @@ const api = {
   updateConfigFiles: (files: ConfigFile[]) => {
     ipcRenderer.send('update-config-files', files);
   },
+  showSplash: () => {
+    ipcRenderer.send('show-splash');
+  },
 };
 
 if (process.contextIsolated) {

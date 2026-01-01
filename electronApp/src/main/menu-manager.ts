@@ -104,12 +104,16 @@ export class MenuManager {
       },
       {
         label: 'Switch Model',
-        submenu: this.configFiles.map((config) => ({
-          label: config.name,
-          click: () => {
-            event.sender.send('switch-character', config.filename);
-          },
-        })),
+        submenu: this.configFiles
+          .filter((config, index, self) =>
+            index === self.findIndex((c) => c.name.toLowerCase() === config.name.toLowerCase())
+          )
+          .map((config) => ({
+            label: config.name,
+            click: () => {
+              event.sender.send('switch-character', config.filename);
+            },
+          })),
       },
       {
         label: 'Toggle Microphone',

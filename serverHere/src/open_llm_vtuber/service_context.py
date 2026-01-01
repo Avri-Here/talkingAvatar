@@ -71,6 +71,7 @@ class ServiceContext:
 
         self.send_text: Callable = None
         self.client_uid: str = None
+        self._current_mcp_servers: list[str] = []  # Track currently enabled servers
 
     def __str__(self):
         return (
@@ -94,6 +95,12 @@ class ServiceContext:
 
     async def _init_mcp_components(self, use_mcpp, enabled_servers):
         """Initializes MCP components based on configuration, dynamically fetching tool info."""
+        
+        # Check if we already have these servers initialized
+        if use_mcpp and self.mcp_client and sorted(enabled_servers or []) == sorted(self._current_mcp_servers):
+            logger.info("MCP servers are already initialized and unchanged. Skipping re-initialization.")
+            return
+
         logger.debug(
             f"Initializing MCP components: use_mcpp={use_mcpp}, enabled_servers={enabled_servers}"
         )
@@ -113,6 +120,7 @@ class ServiceContext:
         self.tool_executor = None
         self.json_detector = None
         self.mcp_prompt = ""
+        self._current_mcp_servers = []
 
         if use_mcpp and enabled_servers:
             # 1. Initialize ServerRegistry
@@ -142,6 +150,7 @@ class ServiceContext:
                 ) = await self.tool_adapter.get_tools(enabled_servers, mcp_client=self.mcp_client)
                 # Store the generated prompt string
                 self.mcp_prompt = mcp_prompt_string
+                self._current_mcp_servers = list(enabled_servers)
                 logger.info(
                     f"Dynamically generated MCP prompt string (length: {len(self.mcp_prompt)})."
                 )
@@ -253,6 +262,14 @@ class ServiceContext:
         self.mcp_client = mcp_client
         self.send_text = send_text
         self.client_uid = client_uid
+        
+        # Load currently enabled servers if provided
+        if self.character_config and self.character_config.agent_config:
+            settings = self.character_config.agent_config.agent_settings.basic_memory_agent
+            if settings.use_mcpp:
+                self._current_mcp_servers = list(settings.mcp_enabled_servers or [])
+            else:
+                self._current_mcp_servers = []
 
         # Initialize session-specific MCP components only if not provided from cache
         if not self.tool_manager or not self.mcp_client:
@@ -508,6 +525,11 @@ class ServiceContext:
                             "conf_uid": self.character_config.conf_uid,
                         }
                     )
+                )
+
+                # Re-send connection established message to mimic initial boot flow
+                await websocket.send_text(
+                    json.dumps({"type": "full-text", "text": "Connection re-established"})
                 )
 
                 await websocket.send_text(

@@ -559,10 +559,15 @@ export class LAppModel extends CubismUserModel {
     // Play greeting motion on first load (before checking if motion is finished)
     if (this._isFirstLoad && this._userTimeSeconds > 0.1) {
       this._isFirstLoad = false;
-      console.log('🎉 Playing greeting motion on first load');
       
-      // Start the greeting motion with force priority
-      this.startMotion('s-common-forward01', 0, LAppDefine.PriorityForce);
+      const greetingMotionGroup = 's-common-forward01';
+      // Only play if the motion group exists in the model settings
+      if (this._modelSetting.getMotionCount(greetingMotionGroup) > 0) {
+        console.log(`🎉 Playing greeting motion on first load: ${greetingMotionGroup}`);
+        this.startMotion(greetingMotionGroup, 0, LAppDefine.PriorityForce);
+      } else {
+        console.log('ℹ️ No greeting motion group found, skipping first load motion.');
+      }
     }
     
     if (this._motionManager.isFinished()) {
@@ -676,6 +681,13 @@ export class LAppModel extends CubismUserModel {
     }
 
     const motionFileName = this._modelSetting.getMotionFileName(group, no);
+
+    if (!motionFileName || motionFileName === '') {
+      if (this._debugMode) {
+        LAppPal.printMessage(`[APP] startMotion: Empty motion filename for group='${group}', no=${no}. Skipping.`);
+      }
+      return InvalidMotionQueueEntryHandleValue;
+    }
 
     // ex) idle_0 or _0 if group is ""
     const name = `${group}_${no}`;

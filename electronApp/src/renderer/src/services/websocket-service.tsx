@@ -2,7 +2,6 @@ import { Subject } from 'rxjs';
 import { ModelInfo } from '@/context/live2d-config-context';
 import { HistoryInfo } from '@/context/websocket-context';
 import { ConfigFile } from '@/context/character-config-context';
-import { toaster } from '@/components/ui/toaster';
 
 export interface DisplayText {
   text: string;
@@ -172,11 +171,6 @@ class WebSocketService {
           this.messageSubject.next(message);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
-          toaster.create({
-            title: `${getTranslation()('error.failedParseWebSocket')}: ${error}`,
-            type: "error",
-            duration: 2000,
-          });
         }
       };
 
@@ -206,11 +200,6 @@ class WebSocketService {
       this.ws.send(JSON.stringify(message));
     } else {
       console.warn('WebSocket is not open. Unable to send message:', message);
-      toaster.create({
-        title: getTranslation()('error.websocketNotOpen'),
-        type: 'error',
-        duration: 2000,
-      });
     }
   }
 

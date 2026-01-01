@@ -6,14 +6,15 @@ export class SplashManager {
 
   createSplash(): BrowserWindow {
     this.splash = new BrowserWindow({
-      width: 400,
-      height: 280,
+      width: 200,
+      height: 190,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
       skipTaskbar: true,
       center: true,
       resizable: false,
+      movable: true,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false
@@ -31,7 +32,8 @@ export class SplashManager {
       padding: 0;
       box-sizing: border-box;
       user-select: none;
-      -webkit-user-select: none;
+      -webkit-app-region: drag;
+
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -49,6 +51,7 @@ export class SplashManager {
       text-align: center;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       width: 180px;
+      -webkit-app-region: drag;
     }
     .logo-container {
       margin-bottom: 15px;
@@ -128,7 +131,7 @@ export class SplashManager {
 
   async close(): Promise<void> {
     if (this.splash) {
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       this.splash.close();
       this.splash = null;
     }

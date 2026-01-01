@@ -8,7 +8,6 @@ import { audioTaskQueue } from '@/utils/task-queue';
 import { useSendAudio } from '@/hooks/utils/use-send-audio';
 import { AiStateContext, AiState } from './ai-state-context';
 import { loadConfig } from '@/utils/config-loader';
-import { toaster } from '@/components/ui/toaster';
 
 /**
  * VAD settings configuration interface
@@ -302,12 +301,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
       }
       setMicOn(true);
     } catch (error) {
-      console.error('Failed to start VAD:', error);
-      toaster.create({
-        title: `${t('error.failedStartVAD')}: ${error}`,
-        type: 'error',
-        duration: 2000,
-      });
+      console.error(`${t('error.failedStartVAD')}:`, error);
     }
   }, [t]);
 

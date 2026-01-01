@@ -65,6 +65,26 @@ function setupIPC(): void {
   ipcMain.handle('get-server-url', () => {
     return pythonServer.getServerUrl();
   });
+
+  ipcMain.on("show-splash", () => {
+    if (!splashManager || !splashManager.getSplash()) {
+      splashManager = new SplashManager();
+      splashManager.createSplash();
+      splashManager.updateStatus('Re-initializing character context...');
+      
+      // Auto-close splash after a delay to simulate loading
+      setTimeout(() => {
+        splashManager?.close().then(() => {
+          // Ensure main window is front and center after splash
+          const window = windowManager.getWindow();
+          if (window) {
+            window.show();
+            window.setAlwaysOnTop(true, 'screen-saver');
+          }
+        });
+      }, 3000);
+    }
+  });
 }
 
 app.whenReady().then(async () => {
@@ -115,7 +135,11 @@ app.whenReady().then(async () => {
   menuManager.createTray();
 
   window.once('ready-to-show', () => {
-    splashManager.close();
+    splashManager?.close().then(() => {
+      // Ensure window is properly setup for pet mode on first show
+      window.show();
+      window.setAlwaysOnTop(true, 'screen-saver');
+    });
   });
 
   window.on("close", (event) => {
