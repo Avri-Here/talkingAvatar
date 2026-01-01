@@ -871,6 +871,10 @@ export class LAppModel extends CubismUserModel {
       return null;
     }
 
+    if (!this._modelSetting) {
+      return null;
+    }
+
     const count: number = this._modelSetting.getHitAreasCount();
 
     for (let i = 0; i < count; i++) {
@@ -1066,6 +1070,10 @@ export class LAppModel extends CubismUserModel {
   public isHitOnModel(x: number, y: number): boolean {
     // Skip if model is transparent
     if (this._opacity < 1) {
+      return false;
+    }
+
+    if (!this._model || !this._modelMatrix) {
       return false;
     }
 

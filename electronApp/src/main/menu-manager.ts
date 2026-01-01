@@ -79,6 +79,13 @@ export class MenuManager {
   private getContextMenuItems(event: Electron.IpcMainEvent): MenuItemConstructorOptions[] {
     const template: MenuItemConstructorOptions[] = [
       {
+        label: 'New Chat',
+        click: () => {
+          event.sender.send('new-chat');
+        },
+      },
+      { type: 'separator' as const },
+      {
         label: 'Toggle Microphone',
         click: () => {
           event.sender.send('mic-toggle');

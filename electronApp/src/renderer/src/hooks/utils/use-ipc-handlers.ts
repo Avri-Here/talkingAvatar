@@ -5,6 +5,7 @@ import { useLive2DConfig } from "@/context/live2d-config-context";
 import { useSwitchCharacter } from "@/hooks/utils/use-switch-character";
 import { useForceIgnoreMouse } from "@/hooks/utils/use-force-ignore-mouse";
 import { useMode } from "@/context/mode-context";
+import { useSidebar } from "@/hooks/sidebar/use-sidebar";
 
 export function useIpcHandlers() {
   const { handleMicToggle } = useMicToggle();
@@ -12,6 +13,7 @@ export function useIpcHandlers() {
   const { modelInfo, setModelInfo } = useLive2DConfig();
   const { switchCharacter } = useSwitchCharacter();
   const { setForceIgnoreMouse } = useForceIgnoreMouse();
+  const { createNewHistory } = useSidebar();
   const { mode } = useMode();
   const isPet = mode === 'pet';
 
@@ -53,6 +55,12 @@ export function useIpcHandlers() {
     (window.api as any).toggleForceIgnoreMouse();
   }, []);
 
+  // Handler for new chat from context menu
+  const newChatHandler = useCallback(() => {
+    console.log("[IPC] New chat requested from context menu");
+    createNewHistory();
+  }, [createNewHistory]);
+
   useEffect(() => {
     if (!window.electron?.ipcRenderer) return;
     if (!isPet) return;
@@ -63,6 +71,7 @@ export function useIpcHandlers() {
     window.electron.ipcRenderer.removeAllListeners("switch-character");
     window.electron.ipcRenderer.removeAllListeners("toggle-force-ignore-mouse");
     window.electron.ipcRenderer.removeAllListeners("force-ignore-mouse-changed");
+    window.electron.ipcRenderer.removeAllListeners("new-chat");
 
     window.electron.ipcRenderer.on("mic-toggle", micToggleHandler);
     window.electron.ipcRenderer.on("interrupt", interruptHandler);
@@ -79,6 +88,7 @@ export function useIpcHandlers() {
       "force-ignore-mouse-changed",
       forceIgnoreMouseChangedHandler,
     );
+    window.electron.ipcRenderer.on("new-chat", newChatHandler);
 
     return () => {
       window.electron?.ipcRenderer.removeAllListeners("mic-toggle");
@@ -89,6 +99,7 @@ export function useIpcHandlers() {
       window.electron?.ipcRenderer.removeAllListeners("switch-character");
       window.electron?.ipcRenderer.removeAllListeners("toggle-force-ignore-mouse");
       window.electron?.ipcRenderer.removeAllListeners("force-ignore-mouse-changed");
+      window.electron?.ipcRenderer.removeAllListeners("new-chat");
     };
   }, [
     micToggleHandler,
@@ -97,6 +108,7 @@ export function useIpcHandlers() {
     switchCharacterHandler,
     toggleForceIgnoreMouseHandler,
     forceIgnoreMouseChangedHandler,
+    newChatHandler,
     isPet,
   ]);
 }
