@@ -69,7 +69,7 @@ export class SplashManager {
       transparent: true,
       alwaysOnTop: true,
       skipTaskbar: true,
-      center: false,
+      center: true, // Center the splash on the screen
       resizable: false,
       movable: true,
       webPreferences: {
@@ -171,6 +171,12 @@ export class SplashManager {
     </div>
     <div class="version">v1.2.1</div>
   </div>
+  <script>
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.on('splash-status', (event, message) => {
+      console.log('[Splash] Status:', message);
+    });
+  </script>
 </body>
 </html>
     `;
@@ -183,6 +189,7 @@ export class SplashManager {
   updateStatus(message: string): void {
     if (this.splash) {
       this.splash.webContents.send('splash-status', message);
+      console.log('[Splash] Status updated:', message);
     }
   }
 

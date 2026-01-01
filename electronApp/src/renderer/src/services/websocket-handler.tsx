@@ -59,6 +59,9 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
       case 'stop-mic':
         stopMic();
         break;
+      case 'interrupt':
+        interrupt(false);
+        break;
       case 'conversation-chain-start':
         setAiState('thinking-speaking');
         audioTaskQueue.clearQueue();

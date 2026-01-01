@@ -20,7 +20,7 @@ export class PythonServerManager {
     this.config = {
       host: 'localhost',
       port: 12393,
-      maxStartupTime: 60000,
+      maxStartupTime: 600000,
       ...config
     };
 
