@@ -1,7 +1,6 @@
 import { Box, ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useEffect, useRef, useMemo } from "react";
 import { AiStateProvider } from "./context/ai-state-context";
-// ... (rest of imports)
 import { Live2DConfigProvider } from "./context/live2d-config-context";
 import { SubtitleProvider } from "./context/subtitle-context";
 import { BgUrlProvider } from "./context/bgurl-context";
@@ -12,14 +11,12 @@ import { CharacterConfigProvider } from "./context/character-config-context";
 import { Toaster } from "./components/ui/toaster";
 import { VADProvider } from "./context/vad-context";
 import { Live2D } from "./components/canvas/live2d";
-import { InputSubtitle } from "./components/electron/input-subtitle";
 import { ProactiveSpeakProvider } from "./context/proactive-speak-context";
 import { ScreenCaptureProvider } from "./context/screen-capture-context";
 import { GroupProvider } from "./context/group-context";
 import { BrowserProvider } from "./context/browser-context";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import { ModeProvider } from "./context/mode-context";
-import { ServerStatusIndicator } from "./components/ServerStatus";
 
 function AppContent(): JSX.Element {
   const live2dContainerRef = useRef<HTMLDivElement>(null);
@@ -79,8 +76,6 @@ function AppContent(): JSX.Element {
       <Box ref={live2dContainerRef} {...live2dPetStyle}>
         <Live2D />
       </Box>
-      <InputSubtitle />
-      <ServerStatusIndicator />
     </>
   );
 }

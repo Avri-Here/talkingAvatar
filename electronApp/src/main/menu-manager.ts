@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
   Tray, nativeImage, Menu, BrowserWindow, ipcMain, screen, MenuItemConstructorOptions, app,
 } from 'electron';
@@ -13,7 +12,6 @@ export interface ConfigFile {
 export class MenuManager {
   private tray: Tray | null = null;
 
-  private currentMode: 'window' | 'pet' = 'pet';
 
   private configFiles: ConfigFile[] = [];
 
@@ -37,22 +35,9 @@ export class MenuManager {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Toggle Mouse Passthrough',
+        label: 'Exit',
         click: () => {
-          const windows = BrowserWindow.getAllWindows();
-          windows.forEach((window) => {
-            window.webContents.send('toggle-force-ignore-mouse');
-          });
-        },
-      },
-      { type: 'separator' as const },
-      {
-        label: 'Show',
-        click: () => {
-          const windows = BrowserWindow.getAllWindows();
-          windows.forEach((window) => {
-            window.show();
-          });
+          app.quit();
         },
       },
       {
@@ -65,9 +50,21 @@ export class MenuManager {
         },
       },
       {
-        label: 'Exit',
+        label: 'Show',
         click: () => {
-          app.quit();
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((window) => {
+            window.show();
+          });
+        },
+      },
+      {
+        label: 'Toggle Mouse Passthrough',
+        click: () => {
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((window) => {
+            window.webContents.send('toggle-force-ignore-mouse');
+          });
         },
       },
     ]);
@@ -79,54 +76,11 @@ export class MenuManager {
   private getContextMenuItems(event: Electron.IpcMainEvent): MenuItemConstructorOptions[] {
     const template: MenuItemConstructorOptions[] = [
       {
-        label: 'New Chat',
+        label: 'Exit',
         click: () => {
-          event.sender.send('new-chat');
+          app.quit();
         },
       },
-      { type: 'separator' as const },
-      {
-        label: 'Toggle Microphone',
-        click: () => {
-          event.sender.send('mic-toggle');
-        },
-      },
-      {
-        label: 'Interrupt',
-        click: () => {
-          event.sender.send('interrupt');
-        },
-      },
-      { type: 'separator' as const },
-      {
-        label: 'Toggle Mouse Passthrough',
-        click: () => {
-          event.sender.send('toggle-force-ignore-mouse');
-        },
-      },
-      {
-        label: 'Toggle Scrolling to Resize',
-        click: () => {
-          event.sender.send('toggle-scroll-to-resize');
-        },
-      },
-      {
-        label: 'Toggle InputBox and Subtitle',
-        click: () => {
-          event.sender.send('toggle-input-subtitle');
-        },
-      },
-      { type: 'separator' as const },
-      {
-        label: 'Switch Character',
-        submenu: this.configFiles.map((config) => ({
-          label: config.name,
-          click: () => {
-            event.sender.send('switch-character', config.filename);
-          },
-        })),
-      },
-      { type: 'separator' as const },
       {
         label: 'Hide',
         click: () => {
@@ -137,9 +91,42 @@ export class MenuManager {
         },
       },
       {
-        label: 'Exit',
+        label: 'New Chat',
         click: () => {
-          app.quit();
+          event.sender.send('new-chat');
+        },
+      },
+      {
+        label: 'Interrupt',
+        click: () => {
+          event.sender.send('interrupt');
+        },
+      },
+      {
+        label: 'Switch Character',
+        submenu: this.configFiles.map((config) => ({
+          label: config.name,
+          click: () => {
+            event.sender.send('switch-character', config.filename);
+          },
+        })),
+      },
+      {
+        label: 'Toggle Microphone',
+        click: () => {
+          event.sender.send('mic-toggle');
+        },
+      },
+      {
+        label: 'Toggle Mouse Passthrough',
+        click: () => {
+          event.sender.send('toggle-force-ignore-mouse');
+        },
+      },
+      {
+        label: 'Toggle Scrolling to Resize',
+        click: () => {
+          event.sender.send('toggle-scroll-to-resize');
         },
       },
     ];
@@ -163,7 +150,6 @@ export class MenuManager {
 
   setMode(mode: 'window' | 'pet'): void {
     // console.log('Setting mode from', this.currentMode, 'to', mode)
-    this.currentMode = mode;
     this.updateTrayMenu();
     this.onModeChange(mode);
   }
