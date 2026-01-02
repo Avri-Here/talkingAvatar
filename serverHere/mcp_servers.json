@@ -16,8 +16,14 @@
     "windowsIntegration": {
       "command": "uvx",
       "args": [
-        "windows-mcp", "--log-level=critical"
-      ]
+        "windows-mcp"
+      ],
+      "env": {
+        "CURL_CA_BUNDLE": "",
+        "REQUESTS_CA_BUNDLE": "",
+        "PYTHONHTTPSVERIFY": "0",
+        "POSTHOG_DISABLED": "true"
+      }
     }
   }
 }

@@ -294,14 +294,7 @@ export const useLive2DModel = ({
           if (baseUrl && modelDir) {
             console.log('🎨 [Live2D Model] Updating model config...');
             
-            // Fade out the current model before releasing it
-            const hasCurrentModel = (window as any).LAppLive2DManager?.getInstance;
-            if (hasCurrentModel) {
-              console.log('🌅 [Live2D Model] Fading out current model...');
-              await fadeOutModel(FADE_OUT_DURATION_MS);
-            }
-            
-            // Release current instance after fade out
+            // Release current instance
             if ((window as any).LAppLive2DManager?.releaseInstance) {
               (window as any).LAppLive2DManager.releaseInstance();
             }
@@ -322,16 +315,17 @@ export const useLive2DModel = ({
                   setPosition(savedPosition);
                 }
                 
-                // Fade in the new model
-                setTimeout(() => {
-                  console.log('🌄 [Live2D Model] Fading in new model...');
-                  fadeInModel(FADE_IN_DURATION_MS);
-                  
-                  // Hide loading after fade in starts
-                  setTimeout(() => {
-                    setIsLoading(false);
-                  }, 300);
-                }, 100);
+                // Set model visible immediately
+                const manager = window.LAppLive2DManager?.getInstance();
+                if (manager) {
+                  const model = manager.getModel(0);
+                  if (model && model.setOpacity) {
+                    model.setOpacity(1);
+                    console.log('✅ [Live2D Model] Model set to fully visible');
+                  }
+                }
+                
+                setIsLoading(false);
               }, 100);
             }, 200);
           } else {

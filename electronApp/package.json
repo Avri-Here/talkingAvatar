@@ -9,7 +9,7 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "postinstall": "electron-builder install-app-deps",
+    "debugPy": "cd ../serverHere && uv run run_server.py",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "killAll": "taskkill /F /IM electron.exe & taskkill /F /IM node.exe & taskkill /F /IM python.exe"

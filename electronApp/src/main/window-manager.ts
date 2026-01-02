@@ -23,7 +23,7 @@ export class WindowManager {
     });
 
     ipcMain.on('mode-change-rendered', () => {
-      this.window?.setOpacity(1);
+      // this.window?.setOpacity(1);
     });
 
     ipcMain.on('window-unfullscreen', () => {
@@ -42,7 +42,7 @@ export class WindowManager {
 
       console.log('Deleting all app settings ...');
 
-      localStorage.clear();
+      window.localStorage.clear();
       app.clearRecentDocuments();
       app.relaunch();
     });
@@ -124,9 +124,7 @@ export class WindowManager {
 
   private setWindowModePet(): void {
     if (!this.window) return;
-
-    this.window.setOpacity(0);
-
+    // this.window.setOpacity(0);
     if (this.window.isFullScreen()) {
       this.window.setFullScreen(false);
     }
@@ -141,42 +139,67 @@ export class WindowManager {
 
   private continueSetWindowModePet(): void {
     if (!this.window) return;
-    // Calculate the bounding rectangle that covers all connected displays.
-    // This allows the transparent pet-mode window to span across monitors,
-    // so the avatar can be dragged freely between them.
-    const displays = screen.getAllDisplays();
-    const minX = Math.min(...displays.map((d) => d.bounds.x));
-    const minY = Math.min(...displays.map((d) => d.bounds.y));
-    const maxX = Math.max(...displays.map((d) => d.bounds.x + d.bounds.width));
-    const maxY = Math.max(...displays.map((d) => d.bounds.y + d.bounds.height));
-    const combinedWidth = maxX - minX;
-    const combinedHeight = maxY - minY;
 
-    // Resize and position the window to cover the entire virtual screen
-    // so the avatar is not clipped when dragged to a second monitor.
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = primaryDisplay.bounds;
+    const windowWidth = 900;
+    const windowHeight = 670;
+    
+    const x = Math.floor((screenWidth - windowWidth) / 2);
+    const y = Math.floor((screenHeight - windowHeight) / 2);
+
     this.window.setBounds({
-      x: minX,
-      y: minY,
-      width: combinedWidth,
-      height: combinedHeight,
+      x,
+      y,
+      width: windowWidth,
+      height: windowHeight,
     });
 
     if (isMac) this.window.setWindowButtonVisibility(false);
     this.window.setResizable(false);
     this.window.setSkipTaskbar(true);
-    this.window.setFocusable(false);
-
-    if (isMac) {
-      this.window.setIgnoreMouseEvents(true);
-      this.window.setVisibleOnAllWorkspaces(true, {
-        visibleOnFullScreen: true,
-      });
-    } else {
-      this.window.setIgnoreMouseEvents(true, { forward: true });
-    }
 
     this.window.webContents.send('mode-changed', 'pet');
   }
+
+  // private continueSetWindowModePet(): void {
+  //   if (!this.window) return;
+  //   // Calculate the bounding rectangle that covers all connected displays.
+  //   // This allows the transparent pet-mode window to span across monitors,
+  //   // so the avatar can be dragged freely between them.
+  //   const displays = screen.getAllDisplays();
+  //   const minX = Math.min(...displays.map((d) => d.bounds.x));
+  //   const minY = Math.min(...displays.map((d) => d.bounds.y));
+  //   const maxX = Math.max(...displays.map((d) => d.bounds.x + d.bounds.width));
+  //   const maxY = Math.max(...displays.map((d) => d.bounds.y + d.bounds.height));
+  //   const combinedWidth = maxX - minX;
+  //   const combinedHeight = maxY - minY;
+
+  //   // Resize and position the window to cover the entire virtual screen
+  //   // so the avatar is not clipped when dragged to a second monitor.
+  //   this.window.setBounds({
+  //     x: minX,
+  //     y: minY,
+  //     width: combinedWidth,
+  //     height: combinedHeight,
+  //   });
+
+  //   if (isMac) this.window.setWindowButtonVisibility(false);
+  //   this.window.setResizable(false);
+  //   this.window.setSkipTaskbar(true);
+  //   this.window.setFocusable(false);
+
+  //   if (isMac) {
+  //     this.window.setIgnoreMouseEvents(true);
+  //     this.window.setVisibleOnAllWorkspaces(true, {
+  //       visibleOnFullScreen: true,
+  //     });
+  //   } else {
+  //     this.window.setIgnoreMouseEvents(true, { forward: true });
+  //   }
+
+  //   this.window.webContents.send('mode-changed', 'pet');
+  // }
 
   getWindow(): BrowserWindow | null {
     return this.window;

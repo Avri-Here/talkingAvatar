@@ -20,9 +20,11 @@ class ToolExecutor:
         self,
         mcp_client: MCPClient,
         tool_manager: ToolManager,
+        max_tool_output_chars: int = 6000,
     ):
         self._mcp_client = mcp_client
         self._tool_manager = tool_manager
+        self._max_tool_output_chars = max_tool_output_chars
 
     def parse_tool_call(self, call: Union[Dict[str, Any], ToolCallObject]) -> tuple:
         """Parse tool call from different formats.
@@ -75,6 +77,25 @@ class ToolExecutor:
 
         return tool_name, tool_id, tool_input, is_error, result_content, parse_error
 
+    def truncate_content(self, content: str, max_chars: int = None) -> str:
+        """Truncate content if it exceeds max_chars."""
+        if max_chars is None:
+            max_chars = self._max_tool_output_chars
+        
+        if not isinstance(content, str):
+            content = str(content)
+        
+        if len(content) <= max_chars:
+            return content
+        
+        truncate_msg = f"\n\n... [Content truncated. Original length: {len(content)} chars, showing first {max_chars} chars] ..."
+        available_chars = max_chars - len(truncate_msg)
+        
+        if available_chars > 0:
+            return content[:available_chars] + truncate_msg
+        else:
+            return content[:max_chars]
+
     def format_tool_result(
         self,
         caller_mode: Literal["Claude", "OpenAI", "Prompt"],
@@ -87,11 +108,18 @@ class ToolExecutor:
             # Claude expects content as a list of blocks or a simple string
             # We will return a list if there are multiple items or non-text items
             if isinstance(result_content, list):
-                # Already formatted as list of blocks
-                content_to_send = result_content
+                # Process list blocks - truncate text in each block
+                content_to_send = []
+                for block in result_content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        truncated_text = self.truncate_content(block.get("text", ""))
+                        content_to_send.append({"type": "text", "text": truncated_text})
+                    else:
+                        # Keep non-text blocks as-is (e.g., images)
+                        content_to_send.append(block)
             elif isinstance(result_content, str) and result_content:
-                # Simple text result
-                content_to_send = result_content
+                # Simple text result - truncate it
+                content_to_send = self.truncate_content(result_content)
             elif not result_content and is_error:
                 # Error case, send error message as string
                 content_to_send = "Error occurred during tool execution."
@@ -106,17 +134,21 @@ class ToolExecutor:
                 "is_error": is_error,
             }
         elif caller_mode == "OpenAI":
-            # OpenAI expects content as a string
+            # OpenAI expects content as a string - truncate it
+            content_str = str(result_content)
+            truncated_content = self.truncate_content(content_str)
             return {
                 "role": "tool",
                 "tool_call_id": tool_id,
-                "content": str(result_content),
+                "content": truncated_content,
             }
         elif caller_mode == "Prompt":
-            # Prompt mode also expects a string content for now
+            # Prompt mode also expects a string content - truncate it
+            content_str = str(result_content)
+            truncated_content = self.truncate_content(content_str)
             return {
                 "tool_id": tool_id,
-                "content": str(result_content),
+                "content": truncated_content,
                 "is_error": is_error,
             }
         return None

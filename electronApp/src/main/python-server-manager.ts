@@ -10,7 +10,7 @@ export interface ServerConfig {
 }
 
 export class PythonServerManager {
-  
+
   private serverProcess: ChildProcess | null = null;
   private config: ServerConfig;
   private serverPath: string;
@@ -26,7 +26,7 @@ export class PythonServerManager {
     };
 
     const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
-    
+
     if (isDev) {
       this.serverPath = join(app.getAppPath(), '..', 'serverHere');
     } else {
@@ -35,7 +35,7 @@ export class PythonServerManager {
   }
 
   async start(): Promise<void> {
-    
+
     if (this.isStarting) {
       console.log('[Python Server] Already starting or running, skipping ...');
       return;
@@ -49,11 +49,20 @@ export class PythonServerManager {
       // Always clean up any existing server to ensure we load fresh code
       console.log('[Python Server] Cleaning up any existing server instances...');
       await this.killExistingServer();
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('[Python Server] Waiting for port to be fully released...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Verify port is actually free before starting
+      const portFree = await this.isPortFree();
+      if (!portFree) {
+        console.log('[Python Server] Port still not free, attempting cleanup again...');
+        await this.killExistingServer();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
 
       await this.startServerProcess();
       await this.waitForServerReady();
-      
+
       this.isRunning = true;
       this.isStarting = false;
       console.log('[Python Server] Server started successfully');
@@ -67,33 +76,47 @@ export class PythonServerManager {
 
   private async killExistingServer(): Promise<void> {
     const isWindows = process.platform === 'win32';
-    
+
     return new Promise((resolve) => {
       if (isWindows) {
         // Kill all processes on the specific port
         const findProcess = spawn('netstat', ['-ano']);
         let output = '';
-        
+
         findProcess.stdout?.on('data', (data: Buffer) => {
           output += data.toString();
         });
-        
+
         findProcess.on('close', () => {
           const lines = output.split('\n');
-          const portLine = lines.find(line => 
+          const portLine = lines.find(line =>
             line.includes(`:${this.config.port}`) && line.includes('LISTENING')
           );
-          
+
           if (portLine) {
             const parts = portLine.trim().split(/\s+/);
             const pidMatch = parts[parts.length - 1];
             if (pidMatch && !isNaN(Number(pidMatch))) {
               console.log(`[Python Server] Killing process ${pidMatch} on port ${this.config.port}`);
-              spawn('taskkill', ['/pid', pidMatch, '/f', '/t']);
+              const killProcess = spawn('taskkill', ['/pid', pidMatch, '/f', '/t']);
+
+              killProcess.on('close', (code) => {
+                console.log(`[Python Server] Taskkill exited with code ${code}`);
+                setTimeout(resolve, 3000);
+              });
+
+              killProcess.on('error', (err) => {
+                console.log(`[Python Server] Taskkill error: ${err}`);
+                setTimeout(resolve, 3000);
+              });
+            } else {
+              console.log('[Python Server] No process found on port');
+              resolve();
             }
+          } else {
+            console.log('[Python Server] Port is free');
+            resolve();
           }
-          
-          setTimeout(resolve, 2000);
         });
 
         findProcess.on('error', () => {
@@ -104,17 +127,26 @@ export class PythonServerManager {
         // Unix-like systems
         const lsof = spawn('lsof', ['-ti', `:${this.config.port}`]);
         let pid = '';
-        
+
         lsof.stdout?.on('data', (data: Buffer) => {
           pid += data.toString().trim();
         });
-        
+
         lsof.on('close', () => {
           if (pid) {
             console.log(`[Python Server] Killing process ${pid} on port ${this.config.port}`);
-            spawn('kill', ['-9', pid]);
+            const killProcess = spawn('kill', ['-9', pid]);
+
+            killProcess.on('close', () => {
+              setTimeout(resolve, 2000);
+            });
+
+            killProcess.on('error', () => {
+              setTimeout(resolve, 2000);
+            });
+          } else {
+            resolve();
           }
-          setTimeout(resolve, 2000);
         });
 
         lsof.on('error', () => {
@@ -128,44 +160,85 @@ export class PythonServerManager {
   private async startServerProcess(): Promise<void> {
 
     return new Promise((resolve, reject) => {
-      const isWindows = process.platform === 'win32';
-      const command = isWindows ? 'cmd.exe' : 'sh';
-      const args = isWindows 
-        ? ['/c', 'uv', 'run', 'run_server.py']
-        : ['-c', 'uv run run_server.py'];
 
-      console.log('[Python Server] Executing:', command, args.join(' '));
-      console.log('[Python Server] Working directory:', this.serverPath);
+      const command = 'python';
+      const args = ['run_server.py'];
 
       this.serverProcess = spawn(command, args, {
         cwd: this.serverPath,
-        shell: true,
+        shell: false,
+        detached: false,
+        windowsHide: true,
         env: {
           ...process.env,
-          PYTHONUNBUFFERED: '1'
+          PYTHONUNBUFFERED: '1',
+          CURL_CA_BUNDLE: '',
+          REQUESTS_CA_BUNDLE: '',
+          PYTHONHTTPSVERIFY: '0'
         }
       });
 
+      console.log(' Executing :', command, args.join(' '));
+
+      // sleep(10000);
+      // function sleep(ms: number) {
+      //   return new Promise(resolve => setTimeout(resolve, ms));
+      // }
+
       this.serverProcess.stdout?.on('data', (data: Buffer) => {
+
         const output = data.toString();
-        console.log(`[Python Server]: ${output.trim()}`);
-        
+
+        if (output.toLowerCase().includes('DEBUG:fakeredis')) {
+          return;
+        }
+
+        if (output.toLowerCase().includes('DEBUG:docket')) {
+          return;
+        }
+
         if (output.includes('Starting server') || output.includes('Uvicorn running')) {
+
           resolve();
         }
+
       });
 
       this.serverProcess.stderr?.on('data', (data: Buffer) => {
-        const error = data.toString();
-        console.error(`server err -  ${error.trim()}`);
+
+
+        const output = data.toString();
+
+        if (output.includes('DEBUG:docket') || output.includes('DEBUG:fakeredis')) {
+          return;
+        }
+
+        console.error(`server err -  ${output.trim()}`);
       });
 
       this.serverProcess.on('error', (error: Error) => {
-        console.error('server err -  Process error:', error);
+
+
+        if (error.message.includes('DEBUG:docket') || error.message.includes('DEBUG:fakeredis')) {
+          return;
+        }
+
+        console.error(`server err -  ${error.message.trim()}`);
         reject(error);
       });
 
       this.serverProcess.on('exit', (code: number | null) => {
+
+
+        const output = code?.toString() || '';
+
+
+        if (output.includes('DEBUG:docket') || output.includes('DEBUG:fakeredis')) {
+          return;
+        }
+
+
+
         console.warn(`server err -  Process exited with code ${code}`);
         this.isRunning = false;
         this.serverProcess = null;
@@ -174,7 +247,7 @@ export class PythonServerManager {
       setTimeout(() => resolve(), 5000);
     });
   }
-  
+
 
   private async waitForServerReady(): Promise<void> {
     const startTime = Date.now();
@@ -197,7 +270,7 @@ export class PythonServerManager {
 
       await new Promise(resolve => setTimeout(resolve, checkInterval));
       attempts++;
-      
+
       if (attempts % 5 === 0) {
         console.log(`[Python Server] Still waiting... (${attempts}/${maxAttempts} attempts)`);
       }
@@ -253,7 +326,7 @@ export class PythonServerManager {
       processToKill.on('exit', onExit);
 
       const isWindows = process.platform === 'win32';
-      
+
       if (isWindows && processToKill.pid) {
         spawn('taskkill', ['/pid', processToKill.pid.toString(), '/f', '/t'], {
           shell: false,
@@ -287,6 +360,48 @@ export class PythonServerManager {
 
   getServerUrl(): string {
     return `http://${this.config.host}:${this.config.port}`;
+  }
+
+  private async isPortFree(): Promise<boolean> {
+    const isWindows = process.platform === 'win32';
+
+    return new Promise((resolve) => {
+      if (isWindows) {
+        const findProcess = spawn('netstat', ['-ano']);
+        let output = '';
+
+        findProcess.stdout?.on('data', (data: Buffer) => {
+          output += data.toString();
+        });
+
+        findProcess.on('close', () => {
+          const lines = output.split('\n');
+          const portLine = lines.find(line =>
+            line.includes(`:${this.config.port}`) && line.includes('LISTENING')
+          );
+          resolve(!portLine);
+        });
+
+        findProcess.on('error', () => {
+          resolve(true);
+        });
+      } else {
+        const lsof = spawn('lsof', ['-ti', `:${this.config.port}`]);
+        let pid = '';
+
+        lsof.stdout?.on('data', (data: Buffer) => {
+          pid += data.toString().trim();
+        });
+
+        lsof.on('close', () => {
+          resolve(!pid);
+        });
+
+        lsof.on('error', () => {
+          resolve(true);
+        });
+      }
+    });
   }
 }
 

@@ -18,6 +18,53 @@ from src.open_llm_vtuber.config_manager import Config, read_yaml, validate_confi
 os.environ["HF_HOME"] = str(Path(__file__).parent / "models")
 os.environ["MODELSCOPE_CACHE"] = str(Path(__file__).parent / "models")
 
+# Disable SSL verification warnings and errors
+os.environ["POSTHOG_DISABLED"] = "true"
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+import urllib3
+import ssl
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Create unverified SSL context
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Patch requests library to disable SSL verification
+try:
+    import requests
+    original_request = requests.Session.request
+    def patched_request(self, method, url, **kwargs):
+        kwargs['verify'] = False
+        return original_request(self, method, url, **kwargs)
+    requests.Session.request = patched_request
+    
+    # Also patch the top-level request function
+    original_requests_request = requests.request
+    def patched_requests_request(method, url, **kwargs):
+        kwargs['verify'] = False
+        return original_requests_request(method, url, **kwargs)
+    requests.request = patched_requests_request
+    requests.get = lambda url, **kwargs: patched_requests_request('GET', url, **kwargs)
+    requests.post = lambda url, **kwargs: patched_requests_request('POST', url, **kwargs)
+except ImportError:
+    pass
+
+# Patch httpx library to disable SSL verification
+try:
+    import httpx
+    original_httpx_client_init = httpx.Client.__init__
+    def patched_httpx_client_init(self, **kwargs):
+        kwargs['verify'] = False
+        return original_httpx_client_init(self, **kwargs)
+    httpx.Client.__init__ = patched_httpx_client_init
+    
+    original_httpx_async_client_init = httpx.AsyncClient.__init__
+    def patched_httpx_async_client_init(self, **kwargs):
+        kwargs['verify'] = False
+        return original_httpx_async_client_init(self, **kwargs)
+    httpx.AsyncClient.__init__ = patched_httpx_async_client_init
+except ImportError:
+    pass
+
 upgrade_manager = UpgradeManager()
 
 
@@ -50,6 +97,8 @@ def init_logger(console_log_level: str = "INFO") -> None:
 
     warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*")
     warnings.filterwarnings("ignore", message=".*I/O operation on closed pipe.*")
+
+    logging.getLogger("fakeredis").setLevel(logging.WARNING)
     logging.getLogger("docket.worker").setLevel(logging.WARNING)
     
 
