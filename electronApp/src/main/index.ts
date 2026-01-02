@@ -14,6 +14,7 @@ let splashManager: SplashManager;
 let isQuitting = false;
 
 function setupIPC(): void {
+  
   ipcMain.handle("get-platform", () => process.platform);
 
   ipcMain.on("set-ignore-mouse-events", (_event, ignore: boolean) => {
@@ -53,6 +54,10 @@ function setupIPC(): void {
 
   ipcMain.on("update-config-files", (_event, files) => {
     menuManager.updateConfigFiles(files);
+  });
+
+  ipcMain.on("update-current-config", (_event, filename: string) => {
+    menuManager.setCurrentConfigFilename(filename);
   });
 
   ipcMain.handle('get-screen-capture', async () => {
@@ -181,16 +186,24 @@ app.whenReady().then(async () => {
 
     if (window) {
 
-      console.log('Starting voice recognition manually from shortcut ..');
+      console.log('Starting, stopping or interrupting voice recognition manually from shortcut ...');
       window.webContents.send("micToggle", { manualControl: true });
     }
+  });
+
+  globalShortcut.register("Alt+S", () => {
+
+    console.log('If any chat is active, it will interrupt it and stop it ...');
+
+    window.webContents.send("interrupt", { resetChatHistory: true });
+
   });
 
   setupIPC();
 
   app.on("activate", () => {
     const window = windowManager.getWindow();
-    
+
     if (window) {
       window.show();
     }

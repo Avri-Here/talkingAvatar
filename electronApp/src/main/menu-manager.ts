@@ -14,6 +14,7 @@ export class MenuManager {
 
 
   private configFiles: ConfigFile[] = [];
+  private currentConfigFilename: string = '';
 
   constructor() {
     this.setupContextMenu();
@@ -116,15 +117,17 @@ export class MenuManager {
       {
         label: 'Interrupt',
         click: () => {
+          
           event.sender.send('interrupt');
         },
       },
       {
-        label: 'Switch Model',
+        label: 'Switch avatar',
         submenu: this.configFiles
           .filter((config, index, self) =>
             index === self.findIndex((c) => c.name.toLowerCase() === config.name.toLowerCase())
           )
+          .filter((config) => config.filename !== this.currentConfigFilename)
           .map((config) => ({
             label: config.name,
             click: () => {
@@ -133,19 +136,19 @@ export class MenuManager {
           })),
       },
       {
-        label: 'Toggle Microphone',
+        label: 'Toggle freeVoiceChat',
         click: () => {
           event.sender.send('micToggle');
         },
       },
       {
-        label: 'Toggle Mouse Passthrough',
+        label: 'Toggle passthrough',
         click: () => {
           event.sender.send('toggle-force-ignore-mouse');
         },
       },
       {
-        label: 'Toggle Scrolling to Resize',
+        label: 'Toggle resize avatar',
         click: () => {
           event.sender.send('toggle-scroll-to-resize');
         },
@@ -176,5 +179,9 @@ export class MenuManager {
 
   updateConfigFiles(files: ConfigFile[]): void {
     this.configFiles = files;
+  }
+
+  setCurrentConfigFilename(filename: string): void {
+    this.currentConfigFilename = filename;
   }
 }

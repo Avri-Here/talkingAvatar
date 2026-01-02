@@ -5,12 +5,14 @@ import { audioTaskQueue } from '@/utils/task-queue';
 import { useAudioTask } from './use-audio-task';
 
 export const useInterrupt = () => {
+
   const { aiState, setAiState } = useAiState();
   const { sendMessage } = useWebSocket();
   const { fullResponse, clearResponse } = useChatHistory();
   const { stopCurrentAudioAndLipSync } = useAudioTask();
 
   const interrupt = (sendSignal = true) => {
+    
     if (aiState !== 'thinking-speaking') return;
     console.log('Interrupting conversation chain');
 
@@ -29,7 +31,7 @@ export const useInterrupt = () => {
 
     clearResponse();
 
-    console.log('Interrupted!');
+    console.log('Interrupted !');
   };
 
   return { interrupt };

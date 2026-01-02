@@ -32,9 +32,15 @@ export function useIpcHandlers() {
     handleMicToggle({ manualControl: args?.manualControl });
   }, [handleMicToggle]);
 
-  const interruptHandler = useCallback(() => {
-    interrupt();
-  }, [interrupt]);
+  const interruptHandler = useCallback((_event: Electron.IpcRendererEvent, args?: { resetChatHistory?: boolean }) => {
+
+    if (args?.resetChatHistory) {
+      createNewHistory();
+      
+    } else {
+      interrupt();
+    }
+  }, [interrupt, createNewHistory]);
 
   const scrollToResizeHandler = useCallback(() => {
     if (modelInfo) {

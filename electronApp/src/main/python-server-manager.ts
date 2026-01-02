@@ -10,6 +10,7 @@ export interface ServerConfig {
 }
 
 export class PythonServerManager {
+  
   private serverProcess: ChildProcess | null = null;
   private config: ServerConfig;
   private serverPath: string;
@@ -34,8 +35,9 @@ export class PythonServerManager {
   }
 
   async start(): Promise<void> {
+    
     if (this.isStarting) {
-      console.log('[Python Server] Already starting');
+      console.log('[Python Server] Already starting or running, skipping ...');
       return;
     }
 

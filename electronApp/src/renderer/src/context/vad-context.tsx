@@ -219,32 +219,30 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
    * Handle speech end event
    */
   const handleSpeechEnd = useCallback((audio: Float32Array) => {
+
     if (!isProcessingRef.current) return;
+
+    
     console.log('Speech ended');
     audioTaskQueue.clearQueue();
 
     if (!isShortcutSessionRef.current) {
 
-      console.log('Auto stop mic is ON and not a Shortcut Session, stopping mic ...');
+      console.log('Not a Shortcut Session, stopping microphone automatically ...');
       stopMic();
-    }
-    
-    else {
-      console.log('Shortcut session: accumulating audio, not sending yet.');
-      manualSessionBufferRef.current.push(audio);
-      
-      // We still need to reset VAD processing state so it can detect NEXT phrase
-      setPreviousTriggeredProbability(0);
-      isProcessingRef.current = false;
-      audioBufferRef.current = [];
       return;
     }
 
+
+    console.log('Shortcut session is active, accumulating audio...');
+    manualSessionBufferRef.current.push(audio);
+
+    // We still need to reset VAD processing state so it can detect NEXT phrase
     setPreviousTriggeredProbability(0);
-    sendAudioPartitionRef.current(audio);
     isProcessingRef.current = false;
     audioBufferRef.current = [];
-    setAiStateRef.current("thinking-speaking");
+    return;
+
   }, []);
 
   /**

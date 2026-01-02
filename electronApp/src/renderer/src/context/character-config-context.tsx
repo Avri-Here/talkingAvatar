@@ -72,6 +72,13 @@ export function CharacterConfigProvider({ children }: { children: React.ReactNod
     (window.api as any)?.updateConfigFiles?.(configFiles);
   }, [configFiles]);
 
+  useEffect(() => {
+    const filename = configFiles.find((config) => config.name === confName)?.filename;
+    if (filename) {
+      (window.api as any)?.updateCurrentConfig?.(filename);
+    }
+  }, [confName, configFiles]);
+
   return (
     <ConfigContext.Provider value={contextValue}>
       {children}
