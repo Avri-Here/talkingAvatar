@@ -72,7 +72,7 @@ npm run dev
 │ • ASR: Whisper.cpp (tiny.en)        │
 │ • TTS: Edge TTS (Free)              │
 │ • Live2D: Character Animation       │
-│ • MCP Tools: time, windowsCli       │
+│ • MCP Tools: time, useWinTerminal   │
 └─────────────────────────────────────┘
 
 ``

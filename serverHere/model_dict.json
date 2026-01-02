@@ -8,7 +8,7 @@
         "use_mcpp": true,
         "mcp_enabled_servers": [
             "time",
-            "windowsCli",
+            "useWinTerminal",
             "ddgSearch"
         ],
         "kScale": 1.3,
@@ -42,6 +42,10 @@
         "description": "Chitose character model",
         "url": "/live2dModels/chitose/chitose_t02.model3.json",
         "voice": "en-US-GuyNeural",
+        "use_mcpp": true,
+        "mcp_enabled_servers": [
+            "windowsIntegration"
+        ],
         "kScale": 1.3,
         "idleMotionGroupName": "Idle",
         "defaultEmotion": 0,
