@@ -29,17 +29,11 @@ export interface VADSettings {
  * @interface VADState
  */
 interface VADState {
-  /** Auto stop mic feature state */
-  autoStopMic: boolean;
-
   /** Microphone active state */
   micOn: boolean;
 
   /** Set microphone state */
   setMicOn: (value: boolean) => void;
-
-  /** Set Auto stop mic state */
-  setAutoStopMic: (value: boolean) => void;
 
   /** Start microphone and VAD */
   startMic: () => Promise<void>;
@@ -70,6 +64,9 @@ interface VADState {
 
   /** Set auto start microphone when conversation ends state */
   setAutoStartMicOnConvEnd: (value: boolean) => void;
+
+  /** Set if current session is triggered by shortcut */
+  setIsShortcutSession: (value: boolean) => void;
 }
 
 /**
@@ -83,7 +80,6 @@ const DEFAULT_VAD_SETTINGS: VADSettings = {
 
 const DEFAULT_VAD_STATE = {
   micOn: false,
-  autoStopMic: false,
   autoStartMicOn: false,
   autoStartMicOnConvEnd: false,
 };
@@ -107,19 +103,18 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   const previousAiStateRef = useRef<AiState>('idle');
 
   const [micOn, setMicOn] = useState(DEFAULT_VAD_STATE.micOn);
-  const autoStopMicRef = useRef(true);
-  const [autoStopMic, setAutoStopMicState] = useState(DEFAULT_VAD_STATE.autoStopMic);
   const [settings, setSettings] = useState<VADSettings>(DEFAULT_VAD_SETTINGS);
   const [autoStartMicOn, setAutoStartMicOnState] = useState(DEFAULT_VAD_STATE.autoStartMicOn);
   const autoStartMicRef = useRef(false);
   const [autoStartMicOnConvEnd, setAutoStartMicOnConvEndState] = useState(DEFAULT_VAD_STATE.autoStartMicOnConvEnd);
   const autoStartMicOnConvEndRef = useRef(false);
+  const isShortcutSessionRef = useRef(false);
+  const manualSessionBufferRef = useRef<Float32Array[]>([]);
 
   useEffect(() => {
     loadConfig().then((config) => {
 
       setMicOn(false);
-      setAutoStopMicState(config.vad.autoStopMic);
       setSettings({
         positiveSpeechThreshold: config.vad.positiveSpeechThreshold,
         negativeSpeechThreshold: config.vad.negativeSpeechThreshold,
@@ -165,10 +160,6 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setAiStateRef.current = setAiState;
   }, [setAiState]);
-
-  useEffect(() => {
-    autoStopMicRef.current = autoStopMic;
-  }, [autoStopMic]);
 
   useEffect(() => {
     autoStartMicRef.current = autoStartMicOn;
@@ -232,10 +223,21 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     console.log('Speech ended');
     audioTaskQueue.clearQueue();
 
-    if (autoStopMicRef.current) {
+    if (!isShortcutSessionRef.current) {
+
+      console.log('Auto stop mic is ON and not a Shortcut Session, stopping mic ...');
       stopMic();
-    } else {
-      console.log('Auto stop mic is OFF, keeping mic active');
+    }
+    
+    else {
+      console.log('Shortcut session: accumulating audio, not sending yet.');
+      manualSessionBufferRef.current.push(audio);
+      
+      // We still need to reset VAD processing state so it can detect NEXT phrase
+      setPreviousTriggeredProbability(0);
+      isProcessingRef.current = false;
+      audioBufferRef.current = [];
+      return;
     }
 
     setPreviousTriggeredProbability(0);
@@ -320,17 +322,37 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     console.log('Stopping VAD');
     if (vadRef.current) {
       // If we were processing speech, send what we have
+      let currentAudio: Float32Array | null = null;
       if (isProcessingRef.current && audioBufferRef.current.length > 0) {
         console.log('Sending remaining audio buffer on manual stop');
         const totalLength = audioBufferRef.current.reduce((acc, curr) => acc + curr.length, 0);
-        const audio = new Float32Array(totalLength);
+        currentAudio = new Float32Array(totalLength);
         let offset = 0;
         for (const chunk of audioBufferRef.current) {
-          audio.set(chunk, offset);
+          currentAudio.set(chunk, offset);
           offset += chunk.length;
         }
-        sendAudioPartitionRef.current(audio);
+      }
+
+      const manualAudioChunks = manualSessionBufferRef.current;
+      if (manualAudioChunks.length > 0 || currentAudio) {
+        console.log('Combining manual session audio chunks and sending...');
+        const allChunks = [...manualAudioChunks];
+        if (currentAudio) {
+          allChunks.push(currentAudio);
+        }
+
+        const totalLength = allChunks.reduce((acc, curr) => acc + curr.length, 0);
+        const finalAudio = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of allChunks) {
+          finalAudio.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        sendAudioPartitionRef.current(finalAudio);
         setAiStateRef.current("thinking-speaking");
+        manualSessionBufferRef.current = [];
       }
 
       vadRef.current.pause();
@@ -344,16 +366,10 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     setMicOn(false);
     isProcessingRef.current = false;
     audioBufferRef.current = [];
+    isShortcutSessionRef.current = false;
+    manualSessionBufferRef.current = [];
   }, []);
 
-  /**
-   * Set Auto stop mic state
-   */
-  const setAutoStopMic = useCallback((value: boolean) => {
-    autoStopMicRef.current = value;
-    setAutoStopMicState(value);
-    forceUpdate();
-  }, []);
 
   const setAutoStartMicOn = useCallback((value: boolean) => {
     autoStartMicRef.current = value;
@@ -367,13 +383,15 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
     forceUpdate();
   }, []);
 
+  const setIsShortcutSession = useCallback((value: boolean) => {
+    isShortcutSessionRef.current = value;
+  }, []);
+
   // Memoized context value
   const contextValue = useMemo(
     () => ({
-      autoStopMic: autoStopMicRef.current,
       micOn,
       setMicOn,
-      setAutoStopMic,
       startMic,
       stopMic,
       previousTriggeredProbability: previousTriggeredProbabilityRef.current,
@@ -384,6 +402,7 @@ export function VADProvider({ children }: { children: React.ReactNode }) {
       setAutoStartMicOn,
       autoStartMicOnConvEnd: autoStartMicOnConvEndRef.current,
       setAutoStartMicOnConvEnd,
+      setIsShortcutSession,
     }),
     [
       micOn,

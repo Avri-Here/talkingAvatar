@@ -22,7 +22,6 @@ interface AppConfig {
   };
   vad: {
     micOn: boolean;
-    autoStopMic: boolean;
     autoStartMicOn: boolean;
     autoStartMicOnConvEnd: boolean;
     positiveSpeechThreshold: number;

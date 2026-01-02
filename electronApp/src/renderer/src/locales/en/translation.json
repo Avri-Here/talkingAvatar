@@ -42,8 +42,6 @@
       "maxScaleHelp": "Maximum zoom level for the Live2D character. Default is 2.0"
     },
     "asr": {
-      "autoStopMic": "Auto Stop Mic When AI Start Speaking",
-      "autoStopMicDesc": "Automatically stops microphone when AI begins speaking to prevent audio feedback",
       "autoStartMicOnConvEnd": "Auto Start Mic When Conversation End",
       "autoStartMicOnConvEndDesc": "Automatically restarts microphone when AI finishes speaking for seamless conversation",
       "autoStartMicOn": "Auto Start Mic When AI Interrupted",

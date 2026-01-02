@@ -40,8 +40,6 @@
       "maxScaleHelp": "Live2D角色的最大缩放级别。默认为2.0"
     },
     "asr": {
-      "autoStopMic": "AI开始说话时自动关闭麦克风",
-      "autoStopMicDesc": "当AI开始说话时自动关闭麦克风，防止音频反馈",
       "autoStartMicOnConvEnd": "对话结束时自动开启麦克风",
       "autoStartMicOnConvEndDesc": "AI说话结束时自动重新开启麦克风，实现无缝对话",
       "autoStartMicOn": "AI被打断时自动开启麦克风",

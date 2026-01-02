@@ -59,11 +59,28 @@ export class MenuManager {
         },
       },
       {
-        label: 'Toggle Mouse Passthrough',
+        label: 'Toggle Passthrough',
         click: () => {
           const windows = BrowserWindow.getAllWindows();
           windows.forEach((window) => {
             window.webContents.send('toggle-force-ignore-mouse');
+          });
+        },
+      },
+      {
+        label: 'Toggle DevTools',
+        click: () => {
+
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((window) => {
+
+            if (!window) return;
+            if (window.webContents.isDevToolsOpened()) {
+              window.webContents.closeDevTools();
+              return;
+            };
+
+            window.webContents.openDevTools({ mode: 'undocked' });
           });
         },
       },

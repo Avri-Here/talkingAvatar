@@ -31,8 +31,8 @@ const api = {
   },
   onMicToggle: (callback: () => void) => {
     const handler = (_event: any) => callback();
-    ipcRenderer.on('micToggle', handler);
-    return () => ipcRenderer.removeListener('micToggle', handler);
+    ipcRenderer.on('mic-toggle', handler);
+    return () => ipcRenderer.removeListener('mic-toggle', handler);
   },
   onInterrupt: (callback: () => void) => {
     const handler = (_event: any) => callback();

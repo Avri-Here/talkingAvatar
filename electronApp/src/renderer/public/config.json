@@ -21,7 +21,6 @@
   },
   "vad": {
     "micOn": false,
-    "autoStopMic": false,
     "autoStartMicOn": false,
     "autoStartMicOnConvEnd": false,
     "positiveSpeechThreshold": 50,

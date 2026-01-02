@@ -28,8 +28,8 @@ export function useIpcHandlers() {
     });
   }, [currentHistoryUid, messages, updateHistoryList, interrupt, sendMessage]);
 
-  const micToggleHandler = useCallback(() => {
-    handleMicToggle();
+  const micToggleHandler = useCallback((_event: Electron.IpcRendererEvent, args: { manualControl?: boolean }) => {
+    handleMicToggle({ manualControl: args?.manualControl });
   }, [handleMicToggle]);
 
   const interruptHandler = useCallback(() => {

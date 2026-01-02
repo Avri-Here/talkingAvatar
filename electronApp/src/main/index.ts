@@ -73,7 +73,7 @@ function setupIPC(): void {
       splashManager = new SplashManager();
       splashManager.createSplash();
       splashManager.updateStatus('Re-initializing character context...');
-      
+
       // Auto-close splash after a delay to simulate loading
       setTimeout(() => {
         splashManager?.close().then(() => {
@@ -117,12 +117,12 @@ app.whenReady().then(async () => {
 
   splashManager = new SplashManager();
   splashManager.createSplash();
-  
+
   pythonServer = new PythonServerManager();
-  
+
   console.log('[Main] Starting Python server...');
   splashManager.updateStatus('Initializing Python environment...');
-  
+
   try {
     await pythonServer.start();
     console.log('[Main] Python server started successfully');
@@ -131,7 +131,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error('[Main] Failed to start Python server:', error);
     splashManager.close();
-    
+
     const result = await dialog.showMessageBox({
       type: 'error',
       title: 'Server Error',
@@ -140,7 +140,7 @@ app.whenReady().then(async () => {
       buttons: ['Exit', 'Continue Anyway'],
       defaultId: 0
     });
-    
+
     if (result.response === 0) {
       app.quit();
       return;
@@ -175,23 +175,14 @@ app.whenReady().then(async () => {
     return false;
   });
 
-  // if (process.env.NODE_ENV === "development") {
-  //   globalShortcut.register("F12", () => {
-  //     const window = windowManager.getWindow();
-  //     if (!window) return;
-
-  //     if (window.webContents.isDevToolsOpened()) {
-  //       window.webContents.closeDevTools();
-  //     } else {
-  //       window.webContents.openDevTools();
-  //     }
-  //   });
-  // }
-
   globalShortcut.register("Alt+R", () => {
+
     const window = windowManager.getWindow();
+
     if (window) {
-      window.webContents.send("micToggle");
+
+      console.log('Starting voice recognition manually from shortcut ..');
+      window.webContents.send("micToggle", { manualControl: true });
     }
   });
 
@@ -199,6 +190,7 @@ app.whenReady().then(async () => {
 
   app.on("activate", () => {
     const window = windowManager.getWindow();
+    
     if (window) {
       window.show();
     }
@@ -209,6 +201,7 @@ app.whenReady().then(async () => {
   });
 
   app.on('web-contents-created', (_, contents) => {
+
     contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
       if (permission === 'media') {
         callback(true);
@@ -229,7 +222,7 @@ app.on("before-quit", async () => {
   isQuitting = true;
   menuManager.destroy();
   globalShortcut.unregisterAll();
-  
+
   if (pythonServer) {
     console.log('[Main] Stopping Python server ...');
     await pythonServer.stop();
