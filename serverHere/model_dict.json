@@ -7,9 +7,8 @@
         "voice": "en-US-AndrewMultilingualNeural",
         "use_mcpp": true,
         "mcp_enabled_servers": [
-            "time",
-            "useWinTerminal",
-            "ddgSearch"
+            "ddgSearch",
+            "windowsCli"
         ],
         "kScale": 1.3,
         "idleMotionGroupName": "Idle",

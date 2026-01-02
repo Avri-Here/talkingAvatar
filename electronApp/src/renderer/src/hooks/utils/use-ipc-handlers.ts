@@ -78,6 +78,17 @@ export function useIpcHandlers() {
     createNewHistory();
   }, [createNewHistory]);
 
+  // Handler for reset avatar position from context menu
+  const resetAvatarPositionHandler = useCallback(() => {
+    console.log("Reset avatar position requested from context menu");
+    const resetFunc = (window as any).resetAvatarPosition;
+    if (resetFunc) {
+      resetFunc();
+    } else {
+      console.warn("[IPC] resetAvatarPosition function not found on window");
+    }
+  }, []);
+
   useEffect(() => {
     if (!window.electron?.ipcRenderer) return;
 
@@ -88,6 +99,7 @@ export function useIpcHandlers() {
     window.electron.ipcRenderer.removeAllListeners("toggle-force-ignore-mouse");
     window.electron.ipcRenderer.removeAllListeners("force-ignore-mouse-changed");
     window.electron.ipcRenderer.removeAllListeners("new-chat");
+    window.electron.ipcRenderer.removeAllListeners("reset-avatar-position");
 
     window.electron.ipcRenderer.on("micToggle", micToggleHandler);
     window.electron.ipcRenderer.on("interrupt", interruptHandler);
@@ -105,6 +117,7 @@ export function useIpcHandlers() {
       forceIgnoreMouseChangedHandler,
     );
     window.electron.ipcRenderer.on("new-chat", newChatHandler);
+    window.electron.ipcRenderer.on("reset-avatar-position", resetAvatarPositionHandler);
 
     return () => {
       window.electron?.ipcRenderer.removeAllListeners("micToggle");
@@ -116,6 +129,7 @@ export function useIpcHandlers() {
       window.electron?.ipcRenderer.removeAllListeners("toggle-force-ignore-mouse");
       window.electron?.ipcRenderer.removeAllListeners("force-ignore-mouse-changed");
       window.electron?.ipcRenderer.removeAllListeners("new-chat");
+      window.electron?.ipcRenderer.removeAllListeners("reset-avatar-position");
     };
   }, [
     micToggleHandler,
@@ -125,5 +139,6 @@ export function useIpcHandlers() {
     toggleForceIgnoreMouseHandler,
     forceIgnoreMouseChangedHandler,
     newChatHandler,
+    resetAvatarPositionHandler,
   ]);
 }

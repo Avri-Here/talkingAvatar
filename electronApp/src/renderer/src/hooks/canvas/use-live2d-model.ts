@@ -38,20 +38,55 @@ const savePositionToStorage = (position: { x: number; y: number }) => {
   }
 };
 
+const isPositionValid = (position: { x: number; y: number }): boolean => {
+  try {
+
+    // Position should be within reasonable bounds
+    // Live2D coordinates are typically between -2 and 2 for normal viewing
+    // If position is too extreme, it means the model is off-screen
+    const isValid = 
+      position.x >= -1.5 && 
+      position.x <= 1.5 && 
+      position.y >= -1.5 && 
+      position.y <= 1.5;
+    
+    console.log(`🔍 [Position Validation] Position (${position.x}, ${position.y}) is ${isValid ? 'valid' : 'invalid'}`);
+    
+    return isValid;
+  } catch (error) {
+    console.error('Failed to validate position:', error);
+    return false;
+  }
+};
+
 const loadPositionFromStorage = async (): Promise<{ x: number; y: number } | null> => {
   try {
     // First try localStorage
     const saved = localStorage.getItem(MODEL_POSITION_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+
+      const position = JSON.parse(saved);
+      if (isPositionValid(position)) {
+        return position;
+      } else {
+
+        console.warn('Saved position is out of bounds, clearing it:', position);
+        console.warn('Avatar will be centered. Use right-click menu -> "Reset Avatar Position" if needed.');
+        localStorage.removeItem(MODEL_POSITION_STORAGE_KEY);
+        // Notify main process to clear its cache
+        (window as any).electron?.ipcRenderer?.send('clear-saved-model-position');
+      }
     }
     
     // If not in localStorage, try to get from main process
     const savedFromMain = await (window as any).electron?.ipcRenderer?.invoke('get-saved-model-position');
-    if (savedFromMain) {
+    if (savedFromMain && isPositionValid(savedFromMain)) {
       // Store in localStorage for faster access next time
       localStorage.setItem(MODEL_POSITION_STORAGE_KEY, JSON.stringify(savedFromMain));
       return savedFromMain;
+    } else if (savedFromMain && !isPositionValid(savedFromMain)) {
+      console.warn('⚠️ [Position Load] Main process position is out of bounds, clearing it:', savedFromMain);
+      (window as any).electron?.ipcRenderer?.send('clear-saved-model-position');
     }
   } catch (error) {
     console.error('Failed to load position from localStorage:', error);
@@ -344,6 +379,26 @@ export const useLive2DModel = ({
       }
     }
   }, []);
+
+  const resetPosition = useCallback(() => {
+
+    try {
+      // Clear saved position from localStorage
+      localStorage.removeItem(MODEL_POSITION_STORAGE_KEY);
+      console.log('Cleared saved position from storage');
+      
+      const defaultPosition = { x: 0, y: 0 };
+      setModelPosition(defaultPosition.x, defaultPosition.y);
+      modelPositionRef.current = defaultPosition;
+      setPosition(defaultPosition);
+      
+      console.log('Avatar position reset to default:', defaultPosition);
+      
+      (window as any).electron?.ipcRenderer?.send('clear-saved-model-position');
+    } catch (error) {
+      console.error('❌ [Reset Position] Failed to reset position:', error);
+    }
+  }, [setModelPosition]);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -720,7 +775,8 @@ Live2DDebug.playRandomMotion("")  // Play random motion from default group
   return {
     position,
     isDragging,
-    isLoading, // Return isLoading
+    isLoading,
+    resetPosition,
     handlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,

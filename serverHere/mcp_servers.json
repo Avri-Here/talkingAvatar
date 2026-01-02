@@ -1,0 +1,23 @@
+{
+  "mcp_servers": {
+    "ddgSearch": {
+      "command": "uvx",
+      "args": [
+        "duckduckgo-mcp-server"
+      ]
+    },
+    "windowsCli": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@simonb97/server-win-cli"
+      ]
+    },
+    "windowsIntegration": {
+      "command": "uvx",
+      "args": [
+        "windows-mcp", "--log-level=critical"
+      ]
+    }
+  }
+}

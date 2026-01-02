@@ -5,6 +5,7 @@ import asyncio
 import argparse
 import subprocess
 import warnings
+import logging
 from pathlib import Path
 import tomli
 import uvicorn
@@ -49,6 +50,8 @@ def init_logger(console_log_level: str = "INFO") -> None:
 
     warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*")
     warnings.filterwarnings("ignore", message=".*I/O operation on closed pipe.*")
+    logging.getLogger("docket.worker").setLevel(logging.WARNING)
+    
 
 
 

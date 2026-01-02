@@ -126,6 +126,7 @@ export class PythonServerManager {
   }
 
   private async startServerProcess(): Promise<void> {
+
     return new Promise((resolve, reject) => {
       const isWindows = process.platform === 'win32';
       const command = isWindows ? 'cmd.exe' : 'sh';
@@ -156,16 +157,16 @@ export class PythonServerManager {
 
       this.serverProcess.stderr?.on('data', (data: Buffer) => {
         const error = data.toString();
-        console.error(`[Python Server Error]: ${error.trim()}`);
+        console.error(`server err -  ${error.trim()}`);
       });
 
       this.serverProcess.on('error', (error: Error) => {
-        console.error('[Python Server] Process error:', error);
+        console.error('server err -  Process error:', error);
         reject(error);
       });
 
       this.serverProcess.on('exit', (code: number | null) => {
-        console.log(`[Python Server] Process exited with code ${code}`);
+        console.warn(`server err -  Process exited with code ${code}`);
         this.isRunning = false;
         this.serverProcess = null;
       });
@@ -173,6 +174,7 @@ export class PythonServerManager {
       setTimeout(() => resolve(), 5000);
     });
   }
+  
 
   private async waitForServerReady(): Promise<void> {
     const startTime = Date.now();
@@ -235,27 +237,43 @@ export class PythonServerManager {
         return;
       }
 
-      this.serverProcess.on('exit', () => {
-        console.log('[Python Server] Server stopped');
-        this.isRunning = false;
-        this.serverProcess = null;
-        resolve();
-      });
+      const processToKill = this.serverProcess;
+      let hasExited = false;
+
+      const onExit = () => {
+        if (!hasExited) {
+          hasExited = true;
+          console.log('[Python Server] Server stopped');
+          this.isRunning = false;
+          this.serverProcess = null;
+          resolve();
+        }
+      };
+
+      processToKill.on('exit', onExit);
 
       const isWindows = process.platform === 'win32';
       
-      if (isWindows) {
-        spawn('taskkill', ['/pid', this.serverProcess.pid!.toString(), '/f', '/t']);
+      if (isWindows && processToKill.pid) {
+        spawn('taskkill', ['/pid', processToKill.pid.toString(), '/f', '/t'], {
+          shell: false,
+          windowsHide: true
+        });
       } else {
-        this.serverProcess.kill('SIGTERM');
+        processToKill.kill('SIGTERM');
       }
 
       setTimeout(() => {
-        if (this.serverProcess) {
+        if (!hasExited) {
           console.log('[Python Server] Force killing server process');
-          this.serverProcess.kill('SIGKILL');
+          if (isWindows && processToKill.pid) {
+            spawn('taskkill', ['/pid', processToKill.pid.toString(), '/f', '/t'], {
+              shell: false,
+              windowsHide: true
+            });
+          }
+          onExit();
         }
-        resolve();
       }, 5000);
     });
   }

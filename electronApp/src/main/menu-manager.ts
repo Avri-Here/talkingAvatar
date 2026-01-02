@@ -60,6 +60,15 @@ export class MenuManager {
         },
       },
       {
+        label: 'Restart settings',
+        click: () => {
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((window) => {
+            window.webContents.send('clearAndRestartApp');
+          });
+        },
+      },
+      {
         label: 'Toggle Passthrough',
         click: () => {
           const windows = BrowserWindow.getAllWindows();

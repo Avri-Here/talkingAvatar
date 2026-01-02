@@ -1,6 +1,9 @@
-import { BrowserWindow, screen, shell, ipcMain } from 'electron';
+
+
+
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
+import { BrowserWindow, screen, shell, ipcMain, app } from 'electron';
 
 const isMac = process.platform === 'darwin';
 
@@ -12,6 +15,7 @@ export class WindowManager {
   private forceIgnoreMouse = false;
 
   constructor() {
+
     ipcMain.on('renderer-ready-for-mode-change', (_event) => {
       setTimeout(() => {
         this.continueSetWindowModePet();
@@ -32,6 +36,15 @@ export class WindowManager {
     // Handle toggle force ignore mouse events from renderer
     ipcMain.on('toggle-force-ignore-mouse', () => {
       this.toggleForceIgnoreMouse();
+    });
+
+    ipcMain.on('clearAndRestartApp', () => {
+
+      console.log('Deleting all app settings ...');
+
+      localStorage.clear();
+      app.clearRecentDocuments();
+      app.relaunch();
     });
   }
 
@@ -82,6 +95,7 @@ export class WindowManager {
     if (!this.window) return;
 
     this.window.on('ready-to-show', () => {
+
       setTimeout(() => {
         this.window?.show();
 
@@ -89,7 +103,7 @@ export class WindowManager {
         if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
           this.window?.webContents.openDevTools({ mode: 'detach' });
         }
-      }, 100);
+      }, 500);
     });
 
     this.window.webContents.setWindowOpenHandler((details) => {
