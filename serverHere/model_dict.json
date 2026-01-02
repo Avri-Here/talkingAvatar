@@ -4,20 +4,25 @@
         "persona_prompt": "You are AI model assistant, a friendly and helpful, you are talking to users via chat that is transcribed to voice there for on your answers you should respond with clear words and sentences, professional and chat messages style ! in addition some times the messages are not written correctly, or missing some words, try to understand the messages via the contexts or the chat history if available, if in case you don't understand the message, ask the user to repeat it. You need to implement and assist the user with all tasks and questions he asks you.",
         "description": "Johan character model",
         "url": "/live2dModels/johan/sub_mahuyufather_t03.model3.json",
+        "voice": "en-US-AndrewMultilingualNeural",
         "use_mcpp": true,
-        "mcp_enabled_servers": ["time", "windowsCli", "ddgSearch"],
+        "mcp_enabled_servers": [
+            "time",
+            "windowsCli",
+            "ddgSearch"
+        ],
         "kScale": 1.3,
         "idleMotionGroupName": "Idle",
-        "defaultEmotion": "face_smile_02",
+        "defaultEmotion": 0,
         "emotionMap": {
-            "neutral": "face_smile_02",
-            "anger": "face_angry_01",
-            "disgust": "face_coldeyes_01",
-            "fear": "face_confusion_01",
-            "joy": "face_smile_01",
-            "smirk": "face_smile_03",
-            "sadness": "face_sad_01",
-            "surprise": "face_surprise_01"
+            "neutral": 0,
+            "anger": 2,
+            "disgust": 2,
+            "fear": 1,
+            "joy": 3,
+            "smirk": 3,
+            "sadness": 1,
+            "surprise": 3
         },
         "tapMotions": {
             "HitAreaHead": {
@@ -36,18 +41,19 @@
         "persona_prompt": "You are AI model assistant, a friendly and helpful, you are talking to users via chat that is transcribed to voice there for on your answers you should respond with clear words and sentences, professional and chat messages style ! in addition some times the messages are not written correctly, or missing some words, try to understand the messages via the contexts or the chat history if available, if in case you don't understand the message, ask the user to repeat it. You need to implement and assist the user with all tasks and questions he asks you.",
         "description": "Chitose character model",
         "url": "/live2dModels/chitose/chitose_t02.model3.json",
+        "voice": "en-US-GuyNeural",
         "kScale": 1.3,
         "idleMotionGroupName": "Idle",
-        "defaultEmotion": "Normal.exp3.json",
+        "defaultEmotion": 0,
         "emotionMap": {
-            "neutral": "Normal.exp3.json",
-            "anger": "Angry.exp3.json",
-            "disgust": "Sad.exp3.json",
-            "fear": "Surprised.exp3.json",
-            "joy": "Smile.exp3.json",
-            "smirk": "Blushing.exp3.json",
-            "sadness": "Sad.exp3.json",
-            "surprise": "Surprised.exp3.json"
+            "neutral": 0,
+            "anger": 2,
+            "disgust": 2,
+            "fear": 1,
+            "joy": 3,
+            "smirk": 3,
+            "sadness": 1,
+            "surprise": 3
         },
         "tapMotions": {
             "HitAreaHead": {
@@ -62,26 +68,39 @@
     },
     {
         "name": "wanko",
-        "persona_prompt": "You are AI model assistant, a friendly and helpful, you are talking to users via chat that is transcribed to voice there for on your answers you should respond with clear words and sentences, professional and chat messages style ! in addition some times the messages are not written correctly, or missing some words, try to understand the messages via the contexts or the chat history if available, if in case you don't understand the message, ask the user to repeat it. You need to implement and assist the user with all tasks and questions he asks you.",
+        "persona_prompt": "You are AI model assistant - very cute and funny , you look like a lovable dog, a friendly and helpful, you are talking to users via chat that is transcribed to voice there for on your answers you should respond with clear words and sentences, professional and chat messages style ! in addition some times the messages are not written correctly, or missing some words, try to understand the messages via the contexts or the chat history if available, if in case you don't understand the message, ask the user to repeat it. You need to implement and assist the user with all tasks and questions he asks you.",
         "description": "Wanko character model",
         "url": "/live2dModels/wanko/wanko_touch_t02.model3.json",
+        "voice": "en-US-AnaNeural",
         "use_mcpp": true,
-        "mcp_enabled_servers": ["ddgSearch"],
-        "kScale": 1.9,
+        "mcp_enabled_servers": [
+            "ddgSearch"
+        ],
+        "kScale": 2.3,
         "idleMotionGroupName": "Idle",
-        "defaultEmotion": null,
-        "emotionMap": {},
+        "defaultEmotion": 0,
+        "emotionMap": {
+            "neutral": 1,
+            "anger": 1,
+            "disgust": 2,
+            "fear": 1,
+            "joy": 5,
+            "smirk": 5,
+            "sadness": 2,
+            "surprise": 5
+        },
         "tapMotions": {
-            "HitAreaHead": {
-                "touch_01": 0.4,
-                "touch_02": 0.3,
-                "shake_01": 0.3
+            "body": {
+                "tap_body": 30,
+                "shake": 30,
+                "pinch_in": 20,
+                "pinch_out": 20
             },
-            "HitAreaBody": {
-                "touch_03": 0.3,
-                "touch_04": 0.3,
-                "touch_05": 0.2,
-                "touch_06": 0.2
+            "head": {
+                "flick_head": 40,
+                "shake": 20,
+                "pinch_in": 20,
+                "pinch_out": 20
             }
         }
     }

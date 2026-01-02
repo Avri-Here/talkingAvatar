@@ -346,12 +346,25 @@ class ServiceContext:
         else:
             logger.info("ASR already initialized with the same config.")
 
-    def init_tts(self, tts_config: TTSConfig) -> None:
-        if not self.tts_engine or (self.character_config.tts_config != tts_config):
+    def init_tts(self, tts_config: TTSConfig, force_reinit: bool = False) -> None:
+        model_voice = None
+        if self.live2d_model and 'voice' in self.live2d_model.model_info:
+            model_voice = self.live2d_model.model_info['voice']
+        
+        current_voice = getattr(self.tts_engine, 'voice', None) if self.tts_engine else None
+        voice_changed = model_voice and current_voice != model_voice
+        
+        if not self.tts_engine or (self.character_config.tts_config != tts_config) or voice_changed or force_reinit:
             logger.info(f"Initializing TTS: {tts_config.tts_model}")
+            tts_params = getattr(tts_config, tts_config.tts_model.lower()).model_dump()
+            
+            if model_voice:
+                logger.info(f"Using model-specific voice: {model_voice}")
+                tts_params['voice'] = model_voice
+            
             self.tts_engine = TTSFactory.get_tts_engine(
                 tts_config.tts_model,
-                **getattr(tts_config, tts_config.tts_model.lower()).model_dump(),
+                **tts_params,
             )
             # saving config should be done after successful initialization
             self.character_config.tts_config = tts_config
