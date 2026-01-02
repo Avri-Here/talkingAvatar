@@ -76,3 +76,49 @@ npm run dev
 └─────────────────────────────────────┘
 
 ``
+
+
+
+
+
+
+
+
+
+
+
+
+    "deepwiki": {
+      "serverUrl": "https://mcp.deepwiki.com/sse"
+    }
+
+
+    
+
+
+        "windowsIntegration": {
+      "command": "uvx",
+      "args": [
+        "windows-mcp"
+      ],
+      "env": {
+        "CURL_CA_BUNDLE": "",
+        "REQUESTS_CA_BUNDLE": "",
+        "PYTHONHTTPSVERIFY": "0",
+        "POSTHOG_DISABLED": "true"
+      }
+    }
+
+
+
+
+
+
+
+
+
+    https://mcpservers.org/servers/VectorInstitute/mcp-goodnews
+
+
+
+    https://mcpservers.org/servers/docs-testdino-com-testdino-mcp-overview

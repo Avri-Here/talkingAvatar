@@ -65,6 +65,18 @@ try:
 except ImportError:
     pass
 
+# Patch aiohttp library to disable SSL verification (for edge-tts)
+try:
+    import aiohttp
+    original_aiohttp_client_session_init = aiohttp.ClientSession.__init__
+    def patched_aiohttp_client_session_init(self, **kwargs):
+        if 'connector' not in kwargs:
+            kwargs['connector'] = aiohttp.TCPConnector(ssl=False)
+        return original_aiohttp_client_session_init(self, **kwargs)
+    aiohttp.ClientSession.__init__ = patched_aiohttp_client_session_init
+except ImportError:
+    pass
+
 upgrade_manager = UpgradeManager()
 
 

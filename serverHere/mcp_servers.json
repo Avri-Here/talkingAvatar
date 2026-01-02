@@ -13,17 +13,18 @@
         "@simonb97/server-win-cli"
       ]
     },
-    "windowsIntegration": {
-      "command": "uvx",
+    "emotionalSupport": {
+      "command": "npx",
       "args": [
-        "windows-mcp"
-      ],
-      "env": {
-        "CURL_CA_BUNDLE": "",
-        "REQUESTS_CA_BUNDLE": "",
-        "PYTHONHTTPSVERIFY": "0",
-        "POSTHOG_DISABLED": "true"
-      }
+        "mcp-emotional-support"
+      ]
+    },
+    "soundEffects": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "sound-effects-mcp"
+      ]
     }
   }
 }
